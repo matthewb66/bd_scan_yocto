@@ -38,11 +38,11 @@ def proc_license_manifest(liclines):
 
 
 def proc_layers_in_recipes():
-    if config.args.bblayers_out != '':
-        if not os.path.isfile(config.args.bblayers_out):
-            print("ERROR: Cannot open bblayers file {} specified by --bblayers_out".format(config.args.bblayers_out))
+    if global_values.bblayers_file != '':
+        if not os.path.isfile(global_values.bblayers_file):
+            print("ERROR: Cannot open bblayers file {} specified by --bblayers_out".format(global_values.bblayers_file))
             sys.exit(3)
-        r = open(config.args.bblayers_out, "r")
+        r = open(global_values.bblayers_file, "r")
         lines = r.read().splitlines()
         r.close()
     else:
@@ -93,166 +93,166 @@ def proc_layers_in_recipes():
     print("	Discovered {} layers".format(len(global_values.layers_list)))
 
 
-def proc_recipe_revisions():
-    print("- Identifying recipe revisions: ...")
-    for recipe in global_values.recipes_dict.keys():
-        if global_values.recipes_dict[recipe].find("AUTOINC") != -1:
-            # recipes[recipe] = recipes[recipe].split("AUTOINC")[0] + "X-" + recipes[recipe].split("-")[-1]
-            global_values.recipes_dict[recipe] = global_values.recipes_dict[recipe].split("AUTOINC")[0] + "X"
-        if global_values.recipes_dict[recipe].find("+svn") != -1:
-            # recipes[recipe] = recipes[recipe].split("+svn")[0] + "+svnX" + recipes[recipe].split("-")[-1]
-            global_values.recipes_dict[recipe] = global_values.recipes_dict[recipe].split("+svn")[0] + "+svnX"
-        if config.args.bblayers_out != '':
-            global_values.recipes_dict[recipe] += "-r0"
-            continue
-
-        recipeinfo = os.path.join(global_values.deploy_dir, 'licenses', recipe, "recipeinfo")
-        if os.path.isfile(recipeinfo):
-            try:
-                r = open(recipeinfo, "r")
-                reclines = r.readlines()
-                r.close()
-            except Exception as e:
-                print("ERROR: unable to open recipeinfo file {}\n".format(recipeinfo) + str(e))
-                sys.exit(3)
-            for line in reclines:
-                if line.find("PR:") != -1:
-                    arr = line.split(":")
-                    rev = arr[1].strip()
-                    global_values.recipes_dict[recipe] += "-" + rev
-                    break
-        else:
-            print("WARNING: Recipeinfo file {} does not exist - assuming no revision\n".format(recipeinfo))
-
-
-def proc_layers():
-    print("- Processing layers: ...")
-    # proj_rel is for the project relationship (project to layers)
-    for layer in global_values.layers_list:
-        # if layer in rep_layers.keys():
-        #     rep_layer = rep_layers[layer]
-        # else:
-        #     rep_layer = layer
-        global_values.bdio_proj_rel_list.append(
-            {
-                # "related": "http:yocto/" + rep_layer + "/1.0",
-                "related": "http:yocto/" + layer + "/1.0",
-                "relationshipType": "DYNAMIC_LINK"
-            }
-        )
-        bdio_layer_rel = []
-        for recipe in global_values.recipes_dict.keys():
-            if recipe in global_values.recipe_layer_dict.keys() and global_values.recipe_layer_dict[recipe] == layer:
-                # print("DEBUG: " + recipe)
-                ver = global_values.recipes_dict[recipe]
-
-                # DEBUG - replacefile
-                # rec_layer = rep_layer
-                # if recipe in rep_recipes.keys():
-                #     recipever_string = rep_recipes[recipe] + "/" + ver
-                # elif recipe + "/" + ver in rep_recipes.keys():
-                #     recipever_string = rep_recipes[recipe + "/" + ver]
-                # elif layer + "/" + recipe in rep_recipes.keys():
-                #     rec_layer = rep_recipes[rep_layer + "/" + recipe].split("/")[0]
-                #     slash = rep_recipes[rep_layer + "/" + recipe].find("/") + 1
-                #     recipever_string = rep_recipes[rep_layer + "/" + recipe][slash:]
-                # elif layer + "/" + recipe + "/" + ver in rep_recipes.keys():
-                #     rec_layer = rep_recipes[rep_layer + "/" + recipe + "/" + ver].split("/")[0]
-                #     slash = rep_recipes[rep_layer + "/" + recipe + "/" + ver].find("/") + 1
-                #     recipever_string = rep_recipes[rep_layer + "/" + recipe + "/" + ver][slash:]
-                # else:
-                #     recipever_string = recipe + "/" + ver
-                recipever_string = recipe + "/" + ver
-
-                bdio_layer_rel.append(
-                    {
-                        # "related": "http:yocto/" + rec_layer + "/" + recipever_string,
-                        "related": "http:yocto/" + layer + "/" + recipever_string,
-                        "relationshipType": "DYNAMIC_LINK"
-                    }
-                )
-
-        global_values.bdio_comps_layers.append({
-            # "@id": "http:yocto/" + rep_layer + "/1.0",
-            "@id": "http:yocto/" + layer + "/1.0",
-            "@type": "Component",
-            "externalIdentifier": {
-                "externalSystemTypeId": "@yocto",
-                # "externalId": rep_layer,
-                "externalId": layer,
-                "externalIdMetaData": {
-                    "forge": {
-                        "name": "yocto",
-                        "separator": "/",
-                        "usePreferredNamespaceAlias": True
-                    },
-                    "pieces": [
-                        # rep_layer,
-                        layer,
-                        "1.0"
-                    ],
-                    "prefix": "meta"
-                }
-            },
-            "relationship": bdio_layer_rel
-        })
-
-
-def proc_recipes():
-    print("- Processing recipes: ...")
-    for recipe in global_values.recipes_dict.keys():
-        ver = global_values.recipes_dict[recipe]
-
-        if recipe in global_values.recipe_layer_dict.keys():
-            layer = global_values.recipe_layer_dict[recipe]
-        #     if recipe_layer[recipe] in rep_layers.keys():
-        #         layer_string = rep_layers[recipe_layer[recipe]]
-        #     else:
-        #         layer_string = recipe_layer[recipe]
-        #     layer_string = recipe_layer[recipe]
-
-            # if recipe in rep_recipes.keys():
-            #     recipever_string = rep_recipes[recipe] + "/" + ver
-            # elif recipe + "/" + ver in rep_recipes.keys():
-            #     recipever_string = rep_recipes[recipe + "/" + ver]
-            # elif layer + "/" + recipe in rep_recipes.keys():
-            #     layer_string = rep_recipes[layer + "/" + recipe].split("/")[0]
-            #     slash = rep_recipes[layer + "/" + recipe].find("/") + 1
-            #     recipever_string = rep_recipes[layer + "/" + recipe][slash:]
-            # elif layer + "/" + recipe + "/" + ver in rep_recipes.keys():
-            #     layer_string = rep_recipes[layer + "/" + recipe + "/" + ver].split("/")[0]
-            #     slash = rep_recipes[layer + "/" + recipe + "/" + ver].find("/") + 1
-            #     recipever_string = rep_recipes[layer + "/" + recipe + "/" + ver][slash:]
-            # else:
-            #     recipever_string = recipe + "/" + ver
-            recipever_string = recipe + "/" + ver
-
-            # if recipe + "/" + ver != recipever_string:
-            #     print(
-            #         "INFO: Replaced layer/recipe {}/{} with {}/{} from replacefile".format(
-            #             layer, recipe, layer_string, recipever_string))
-
-            global_values.bdio_comps_recipes.append(
-                {
-                    "@id": "http:yocto/" + layer + "/" + recipever_string,
-                    "@type": "Component",
-                    "externalIdentifier": {
-                        "externalSystemTypeId": "@yocto",
-                        "externalId": layer + "/" + recipever_string,
-                        "externalIdMetaData": {
-                            "forge": {
-                                "name": "yocto",
-                                "separator": "/",
-                                "usePreferredNamespaceAlias": True
-                            },
-                            "pieces": [
-                                recipever_string.replace("/", ",")
-                            ],
-                            "prefix": layer
-                        }
-                    },
-                    "relationship": []
-                })
+# def proc_recipe_revisions():
+#     print("- Identifying recipe revisions: ...")
+#     for recipe in global_values.recipes_dict.keys():
+#         if global_values.recipes_dict[recipe].find("AUTOINC") != -1:
+#             # recipes[recipe] = recipes[recipe].split("AUTOINC")[0] + "X-" + recipes[recipe].split("-")[-1]
+#             global_values.recipes_dict[recipe] = global_values.recipes_dict[recipe].split("AUTOINC")[0] + "X"
+#         if global_values.recipes_dict[recipe].find("+svn") != -1:
+#             # recipes[recipe] = recipes[recipe].split("+svn")[0] + "+svnX" + recipes[recipe].split("-")[-1]
+#             global_values.recipes_dict[recipe] = global_values.recipes_dict[recipe].split("+svn")[0] + "+svnX"
+#         if config.args.bblayers_out != '':
+#             global_values.recipes_dict[recipe] += "-r0"
+#             continue
+#
+#         recipeinfo = os.path.join(global_values.deploy_dir, 'licenses', recipe, "recipeinfo")
+#         if os.path.isfile(recipeinfo):
+#             try:
+#                 r = open(recipeinfo, "r")
+#                 reclines = r.readlines()
+#                 r.close()
+#             except Exception as e:
+#                 print("ERROR: unable to open recipeinfo file {}\n".format(recipeinfo) + str(e))
+#                 sys.exit(3)
+#             for line in reclines:
+#                 if line.find("PR:") != -1:
+#                     arr = line.split(":")
+#                     rev = arr[1].strip()
+#                     global_values.recipes_dict[recipe] += "-" + rev
+#                     break
+#         else:
+#             print("WARNING: Recipeinfo file {} does not exist - assuming no revision\n".format(recipeinfo))
+#
+#
+# def proc_layers():
+#     print("- Processing layers: ...")
+#     # proj_rel is for the project relationship (project to layers)
+#     for layer in global_values.layers_list:
+#         # if layer in rep_layers.keys():
+#         #     rep_layer = rep_layers[layer]
+#         # else:
+#         #     rep_layer = layer
+#         global_values.bdio_proj_rel_list.append(
+#             {
+#                 # "related": "http:yocto/" + rep_layer + "/1.0",
+#                 "related": "http:yocto/" + layer + "/1.0",
+#                 "relationshipType": "DYNAMIC_LINK"
+#             }
+#         )
+#         bdio_layer_rel = []
+#         for recipe in global_values.recipes_dict.keys():
+#             if recipe in global_values.recipe_layer_dict.keys() and global_values.recipe_layer_dict[recipe] == layer:
+#                 # print("DEBUG: " + recipe)
+#                 ver = global_values.recipes_dict[recipe]
+#
+#                 # DEBUG - replacefile
+#                 # rec_layer = rep_layer
+#                 # if recipe in rep_recipes.keys():
+#                 #     recipever_string = rep_recipes[recipe] + "/" + ver
+#                 # elif recipe + "/" + ver in rep_recipes.keys():
+#                 #     recipever_string = rep_recipes[recipe + "/" + ver]
+#                 # elif layer + "/" + recipe in rep_recipes.keys():
+#                 #     rec_layer = rep_recipes[rep_layer + "/" + recipe].split("/")[0]
+#                 #     slash = rep_recipes[rep_layer + "/" + recipe].find("/") + 1
+#                 #     recipever_string = rep_recipes[rep_layer + "/" + recipe][slash:]
+#                 # elif layer + "/" + recipe + "/" + ver in rep_recipes.keys():
+#                 #     rec_layer = rep_recipes[rep_layer + "/" + recipe + "/" + ver].split("/")[0]
+#                 #     slash = rep_recipes[rep_layer + "/" + recipe + "/" + ver].find("/") + 1
+#                 #     recipever_string = rep_recipes[rep_layer + "/" + recipe + "/" + ver][slash:]
+#                 # else:
+#                 #     recipever_string = recipe + "/" + ver
+#                 recipever_string = recipe + "/" + ver
+#
+#                 bdio_layer_rel.append(
+#                     {
+#                         # "related": "http:yocto/" + rec_layer + "/" + recipever_string,
+#                         "related": "http:yocto/" + layer + "/" + recipever_string,
+#                         "relationshipType": "DYNAMIC_LINK"
+#                     }
+#                 )
+#
+#         global_values.bdio_comps_layers.append({
+#             # "@id": "http:yocto/" + rep_layer + "/1.0",
+#             "@id": "http:yocto/" + layer + "/1.0",
+#             "@type": "Component",
+#             "externalIdentifier": {
+#                 "externalSystemTypeId": "@yocto",
+#                 # "externalId": rep_layer,
+#                 "externalId": layer,
+#                 "externalIdMetaData": {
+#                     "forge": {
+#                         "name": "yocto",
+#                         "separator": "/",
+#                         "usePreferredNamespaceAlias": True
+#                     },
+#                     "pieces": [
+#                         # rep_layer,
+#                         layer,
+#                         "1.0"
+#                     ],
+#                     "prefix": "meta"
+#                 }
+#             },
+#             "relationship": bdio_layer_rel
+#         })
+#
+#
+# def proc_recipes():
+#     print("- Processing recipes: ...")
+#     for recipe in global_values.recipes_dict.keys():
+#         ver = global_values.recipes_dict[recipe]
+#
+#         if recipe in global_values.recipe_layer_dict.keys():
+#             layer = global_values.recipe_layer_dict[recipe]
+#         #     if recipe_layer[recipe] in rep_layers.keys():
+#         #         layer_string = rep_layers[recipe_layer[recipe]]
+#         #     else:
+#         #         layer_string = recipe_layer[recipe]
+#         #     layer_string = recipe_layer[recipe]
+#
+#             # if recipe in rep_recipes.keys():
+#             #     recipever_string = rep_recipes[recipe] + "/" + ver
+#             # elif recipe + "/" + ver in rep_recipes.keys():
+#             #     recipever_string = rep_recipes[recipe + "/" + ver]
+#             # elif layer + "/" + recipe in rep_recipes.keys():
+#             #     layer_string = rep_recipes[layer + "/" + recipe].split("/")[0]
+#             #     slash = rep_recipes[layer + "/" + recipe].find("/") + 1
+#             #     recipever_string = rep_recipes[layer + "/" + recipe][slash:]
+#             # elif layer + "/" + recipe + "/" + ver in rep_recipes.keys():
+#             #     layer_string = rep_recipes[layer + "/" + recipe + "/" + ver].split("/")[0]
+#             #     slash = rep_recipes[layer + "/" + recipe + "/" + ver].find("/") + 1
+#             #     recipever_string = rep_recipes[layer + "/" + recipe + "/" + ver][slash:]
+#             # else:
+#             #     recipever_string = recipe + "/" + ver
+#             recipever_string = recipe + "/" + ver
+#
+#             # if recipe + "/" + ver != recipever_string:
+#             #     print(
+#             #         "INFO: Replaced layer/recipe {}/{} with {}/{} from replacefile".format(
+#             #             layer, recipe, layer_string, recipever_string))
+#
+#             global_values.bdio_comps_recipes.append(
+#                 {
+#                     "@id": "http:yocto/" + layer + "/" + recipever_string,
+#                     "@type": "Component",
+#                     "externalIdentifier": {
+#                         "externalSystemTypeId": "@yocto",
+#                         "externalId": layer + "/" + recipever_string,
+#                         "externalIdMetaData": {
+#                             "forge": {
+#                                 "name": "yocto",
+#                                 "separator": "/",
+#                                 "usePreferredNamespaceAlias": True
+#                             },
+#                             "pieces": [
+#                                 recipever_string.replace("/", ",")
+#                             ],
+#                             "prefix": layer
+#                         }
+#                     },
+#                     "relationship": []
+#                 })
 
 
 def proc_pkg_files():
@@ -275,7 +275,7 @@ def proc_pkg_files():
                 if not file.endswith(".done"):
                     files_to_copy.append(file)
                     found = True
-                    print('- Located package file:' + file)
+                    print(' - Located package file:' + file)
 
         # Try to find rpm files in rpm folder
         pattern = "{}/{}/{}[-_]{}*".format(global_values.rpm_dir, global_values.machine, recipe, ver)
@@ -286,7 +286,7 @@ def proc_pkg_files():
             found = True
 
         if not found:
-            print("- No package file found")
+            print(" - No package file found")
 
     # print(files_to_copy)
     return files_to_copy
@@ -326,7 +326,9 @@ def proc_yocto_project(manfile):
     print("\nProcessing Bitbake project:")
     if not proc_license_manifest(liclines):
         sys.exit(3)
-    # proc_layers_in_recipes()
+
+    if len(global_values.scan_layers_full) > 0 or len(global_values.scan_layers_snippets) > 0:
+        proc_layers_in_recipes()
     # proc_recipe_revisions()
     # if not config.args.no_kb_check:
     #     utils.check_recipes(config.args.kb_recipe_dir)
@@ -340,11 +342,10 @@ def proc_yocto_project(manfile):
         if tempdir != '':
             print("\nScanning package files with Synopsys Detect ...")
 
-            bd_scan_process.run_detect_sigscan(tempdir, config.args.project, config.args.version,
-                                               config.args.blackduck_trust_cert)
+            # bd_scan_process.run_detect_sigscan(tempdir, config.args.project, config.args.version,
+            #                                    config.args.blackduck_trust_cert)
 
-        bd_process_bom.load_bd_project(config.args.project, config.args.version)
-
+        bd_process_bom.process_project(config.args.project, config.args.version)
 
 def process_patched_cves(bd, version, vuln_list):
 

@@ -12,7 +12,7 @@ import asyncio
 from bd_scan_yocto.bdcomponentlist import ComponentList
 from blackduck import Client
 from bd_scan_yocto import global_values
-from bd_scan_yocto import config
+# from bd_scan_yocto import config
 from bd_scan_yocto import bd_asyncdata
 
 
@@ -42,9 +42,9 @@ def check_projver(bd, proj, ver):
 	sys.exit(2)
 
 
-def get_bom_components(bd, verdict):
+def get_bom_components(bd, ver_dict):
 	comp_dict = {}
-	res = bd.list_resources(verdict)
+	res = bd.list_resources(ver_dict)
 
 	blocksize = 1000
 
@@ -89,7 +89,7 @@ def get_all_projects(bd):
 	return projlist
 
 
-def load_bd_project(bdproj, bdver):
+def process_project(bdproj, bdver):
 	bd = Client(
 		token=global_values.bd_api,
 		base_url=global_values.bd_url,
@@ -97,12 +97,13 @@ def load_bd_project(bdproj, bdver):
 		timeout=60
 	)
 
-	project, version = check_projver(bd, bdproj, bdver)
+	proj_dict, ver_dict = check_projver(bd, bdproj, bdver)
 
-	bom_components = get_bom_components(bd, version)
+	bom_components = get_bom_components(bd, ver_dict)
 
 	process_bom(bd, bom_components)
 
+	ignore_components(bd, ver_dict, )
 	return
 
 
@@ -110,12 +111,8 @@ def process_bom(bd, bom_components):
 	logging.info("Processing {} bom entries ...".format(len(bom_components)))
 
 	# logging.info("Downloading Async data ...")
-	# all_copyrights = bd_asyncdata.get_data_async(bd, bom_components, args.blackduck_trust_cert)
-
-	# copyrightprocessor = CopyrightProcessor(args.code_languages.split(','), int(args.max_lines))
 
 	componentlist = ComponentList()
-	# componentlist.process_bom(bd, bom_components, all_copyrights, copyrightprocessor, args.notstrict)
 	componentlist.process_bom(bd, bom_components)
 
 	all_comp_count = len(bom_components)
@@ -123,26 +120,28 @@ def process_bom(bd, bom_components):
 
 	print("Processed Black Duck project from BD Server {}".format(global_values.bd_url))
 	print(f"Component counts:\n- Total Components {all_comp_count}")
-	print(f"- Ignored Components {ignored_comps}")
+	print(f"- Already Ignored Components {ignored_comps}")
 
 	return
 
 
-def process_project(bd, project, version, bearer_token):
+def ignore_components(bd, ver_dict):
 	print('Getting components from project ... found ', end='')
-	bom_compsdict = get_bom_components(version)
+	bom_compsdict = get_bom_components(bd, ver_dict)
 	print("{}".format(str(len(bom_compsdict))))
 
 	print('\nASYNC - Getting component data ... ')
 
 	if platform.system() == "Windows":
 		asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-	pkgmatch_dict = asyncio.run(bd_asyncdata.async_main(bom_compsdict, bearer_token, version))
+	pkgmatch_dict = asyncio.run(bd_asyncdata.async_main(bom_compsdict, bd.session.auth.bearer_token, ver_dict))
 
 	ignore_comps = []
 	count_ignored = 0
 	ignore_array = []
 
+	if len(global_values.scan_layers_full) > 0:
+		pass
 	for comp in bom_compsdict.keys():
 		if not pkgmatch_dict[comp]:
 			# Ignore this component
@@ -164,7 +163,7 @@ def process_project(bd, project, version, bearer_token):
 		}
 
 		try:
-			url = version['_meta']['href'] + '/bulk-adjustment'
+			url = ver_dict['_meta']['href'] + '/bulk-adjustment'
 			headers = {
 				"Accept": "application/vnd.blackducksoftware.bill-of-materials-6+json",
 				"Content-Type": "application/vnd.blackducksoftware.bill-of-materials-6+json"

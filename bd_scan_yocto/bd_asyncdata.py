@@ -9,12 +9,8 @@ from bd_scan_yocto import global_values
 async def async_main(comps, token, ver):
     async with aiohttp.ClientSession(trust_env=True) as session:
         data_tasks = []
-        # comment_tasks = []
         file_tasks = []
-        # lic_tasks = []
-        # url_tasks = []
-        # supplier_tasks = []
-        # child_tasks = []
+
         count = 0
         for url, comp in comps.items():
             count += 1
@@ -80,8 +76,8 @@ async def async_get_files(session, comp, token):
             #             retfile = rfile
             for item in result_data['items']:
                 # if item['filePath']['path'] == item['filePath']['fileName']:
+                print(item['filePath']['path'] + ':' + item['filePath']['archiveContext'])
                 if item['filePath']['compositePathContext'] == item['filePath']['path'] + '#':
-                    print(item['filePath']['path'])
                     archive = True
                     break
 

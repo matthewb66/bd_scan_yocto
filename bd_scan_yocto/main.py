@@ -1,4 +1,4 @@
-import os
+# import os
 import sys
 import time
 
@@ -6,6 +6,7 @@ from bd_scan_yocto import global_values
 from bd_scan_yocto import config
 from bd_scan_yocto import process
 from bd_scan_yocto import utils
+from bd_scan_yocto import bd_scan_process
 
 
 # if config.args.bblayers_out != '':
@@ -15,8 +16,6 @@ from bd_scan_yocto import utils
 def main():
     print(f"Yocto Black Duck Signature Scan Utility v{global_values.script_version}")
     print("---------------------------------------------------------\n")
-
-    bd = None
 
     config.check_args()
 
@@ -29,9 +28,10 @@ def main():
     if bd is None:
         print(f"ERROR: Cannot connect to specified BD server {global_values.bd_url}")
         sys.exit(3)
+    global_values.bd = bd
 
-    if global_values.run_detect_for_bitbake:
-        process.run_detect_for_bitbake()
+    if not global_values.skip_detect_for_bitbake:
+        bd_scan_process.run_detect_for_bitbake()
 
     if not config.args.cve_check_only:
         process.proc_yocto_project(global_values.manifest_file)

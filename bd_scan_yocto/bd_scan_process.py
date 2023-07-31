@@ -32,7 +32,7 @@ def get_detect():
                       " download manually and use --detect-jar-path option")
                 sys.exit(2)
 
-            cmd = "/bin/bash " + shpath
+            cmd = "/bin/bash " + shpath + " "
     else:
         cmd = "java " + global_values.detect_jar
 
@@ -70,7 +70,6 @@ def run_detect_for_bitbake():
     if global_values.bd_trustcert:
         detect_cmd += "--blackduck.trust.cert=true "
     detect_cmd += "--detect.wait.for.results=true "
-    detect_cmd += f"--detect.bitbake.package.names={global_values.target} "
     detect_cmd += "--detect.tools=DETECTOR "
     detect_cmd += f"--detect.bitbake.package.names={global_values.target} "
     detect_cmd += "--detect.bitbake.dependency.types.excluded=BUILD "

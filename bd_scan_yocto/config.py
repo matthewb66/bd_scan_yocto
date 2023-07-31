@@ -32,7 +32,8 @@ parser.add_argument("-m", "--manifest",
                     default="")
 parser.add_argument("--machine", help="Machine Architecture (for example 'qemux86-64')",
                     default="")
-parser.add_argument("--no_detect_for_bitbake", help="Skip running Detect for Bitbake dependencies", action='store_true')
+parser.add_argument("--skip_detect_for_bitbake", help="Skip running Detect for Bitbake dependencies",
+                    action='store_true')
 parser.add_argument("--cve_check_only", help="Only check for patched CVEs from cve_check and update existing project",
                     action='store_true')
 parser.add_argument("--no_cve_check", help="Skip check for and update of patched CVEs", action='store_true')
@@ -40,18 +41,20 @@ parser.add_argument("--cve_check_file",
                     help="CVE check output file (if not specified will be determined from conf files)", default="")
 parser.add_argument("--report",
                     help="Output report.txt file of matched recipes",
+                    default="bd_scan_report.txt")
+parser.add_argument("--bblayers_out",
+                    help='''Specify file containing 'bitbake-layers show-recipes' output (do not run command) & bypass
+                    checks for revisions in recipe_info files''',
                     default="")
-# parser.add_argument("--bblayers_out",
-#                     help='''Specify file containing 'bitbake-layers show-recipes' output (do not run command) & bypass
-#                     checks for revisions in recipe_info files''',
-#                     default="")
 parser.add_argument("--wizard", help="Start command line wizard (Wizard will run by default if config incomplete)",
                     action='store_true')
 parser.add_argument("--nowizard", help="Do not use wizard (command line batch only)", action='store_true')
-parser.add_argument("--scan_snippet_layers",
-                    help='''If --scan_unmatched_recipes is set, specify a command-delimited list of layers where recipes will also be
-                    Snippet scanned''',
+parser.add_argument("--scan_layers_snippets",
+                    help="Specify a command-delimited list of layers where recipes will also be Snippet scanned",
                     default="")
+parser.add_argument("--scan_layers_full",
+                    help="Specify a command-delimited list of layers where recipes will be signature scanned"
+                         "fully (not removing internal components)", default="")
 # parser.add_argument("--deploy_dir",
 #                     help="Top Level directory where artefacts are written (usually poky/build/tmp/deploy)",
 #                     default="")
@@ -59,7 +62,8 @@ parser.add_argument("--download_dir",
                     help="Download directory where original packages are downloaded (usually poky/build/downloads)",
                     default="")
 parser.add_argument("--rpm_dir",
-                    help="Download directory where rpm packages are downloaded (usually poky/build/tmp/deploy/rpm/<ARCH>)",
+                    help="Download directory where rpm packages are downloaded "
+                         "(usually poky/build/tmp/deploy/rpm/<ARCH>)",
                     default="")
 parser.add_argument("--debug", help="DEBUG mode - skip various checks", action='store_true')
 
@@ -173,8 +177,26 @@ def check_args():
     else:
         global_values.detect_jar = args.detect_jar_path
 
-    if args.no_detect_for_bitbake == 'true':
-        global_values.run_detect_for_bitbake = False
+    if args.report != "":
+        global_values.report_file = args.report
+
+    if args.skip_detect_for_bitbake:
+        global_values.skip_detect_for_bitbake = True
+
+    if args.scan_layers_snippets != '':
+        global_values.scan_layers_snippets = args.scan_layers_snippets.split(',')
+
+    if args.scan_layers_full != '':
+        global_values.scan_layers_full = args.scan_layers_full.split(',')
+
+    if args.bblayers_out != "":
+        if args.scan_layers_snippets == '' and args.scan_layers_full == '':
+            print(f"INFO: Bitbake-layers output file {args.bblayers_out} is not required unless --scan_layers_snippets "
+                  "or --scan_layers_full is specified")
+        if os.path.isfile(args.bblayers_out):
+            global_values.bblayers_file = args.bblayers_out
+        else:
+            print(f"WARNING: bitbake-layers output file {args.bblayers_out} does not exist - skipping ...")
 
     return
 
@@ -381,40 +403,39 @@ def input_filepattern(pattern, filedesc):
 
 
 def do_wizard():
-    print('\nRUNNING WIZARD ...\n')
-    # wiz_categories = [
-    #     'BD_SERVER',
-    #     'BD_API_TOKEN',
-    #     'BD_TRUST_CERT',
-    #     'PROJECT',
-    #     'VERSION',
-    #     'DEPLOY_DIR',
-    #     'DOWNLOAD_DIR',
-    #     'RPM_DIR',
-    #     'CVE_CHECK',
-    # ]
+    print('\nRUNNING WIZARD (Use --no_wizard to disable) ...')
+
     wiz_dict = [
-        {'value': 'global_values.bd_url', 'prompt': 'Black Duck server URL', 'vtype': 'string_default'},
-        {'value': 'global_values.bd_api', 'prompt': 'Black Duck API token', 'vtype': 'string_default'},
+        {'value': 'global_values.bd_url', 'prompt': 'Black Duck server URL', 'vtype': 'string'},
+        {'value': 'global_values.bd_api', 'prompt': 'Black Duck API token', 'vtype': 'string'},
         {'value': 'global_values.bd_trustcert', 'prompt': 'Trust BD Server certificate', 'vtype': 'yesno'},
         {'value': 'global_values.bd_project', 'prompt': 'Black Duck project name', 'vtype': 'string'},
         {'value': 'global_values.bd_version', 'prompt': 'Black Duck version name', 'vtype': 'string'},
         {'value': 'global_values.manifest_file', 'prompt': 'Manifest file path', 'vtype': 'file_pattern',
          'pattern': '**/license.manifest', 'filename': 'license.manifest file'},
-        {'value': 'global_values.deploy_dir', 'prompt': 'Yocto deploy folder', 'vtype': 'folder'},
+        {'value': 'global_values.target', 'prompt': 'Yocto target name', 'vtype': 'string',
+         'condition': 'global_values.skip_detect_for_bitbake'},
+        # {'value': 'global_values.deploy_dir', 'prompt': 'Yocto deploy folder', 'vtype': 'folder'},
         {'value': 'global_values.download_dir', 'prompt': 'Yocto package download folder', 'vtype': 'folder'},
         {'value': 'global_values.rpm_dir', 'prompt': 'Yocto rpm package download folder', 'vtype': 'folder'},
-        {'value': 'global_values.cve_check',
-         'prompt': 'Do you want to run a CVE check to patch CVEs in the BD project which have been patched locally?',
-         'vtype': 'yesno'},
-        {'value': 'global_values.cve_check_file', 'prompt': 'CVE check file path',
-         'vtype': 'file_pattern', 'pattern': '**/rootfs.cve', 'filename': 'CVE check output file'},
+        # {'value': 'global_values.cve_check',
+        #  'prompt': 'Do you want to run a CVE check to patch CVEs in the BD project which have been patched locally?',
+        #  'vtype': 'yesno'},
+        # {'value': 'global_values.cve_check_file', 'prompt': 'CVE check file path',
+        #  'vtype': 'file_pattern', 'pattern': '**/rootfs.cve', 'filename': 'CVE check output file',
+        #  'condition': 'global_values.cve_check'},
+        {'value': 'global_values.report_file', 'prompt': 'Output report file', 'vtype': 'string'},
     ]
 
-    cvecheck = False
+    wiz_count = 0
     for wiz_entry in wiz_dict:
         val = ''
-        if eval(wiz_entry['value']) == '':
+        existingval = eval(wiz_entry['value'])
+        if existingval == '':
+            if 'condition' in wiz_entry:
+                conditionval = eval(wiz_entry['condition'])
+                if conditionval:
+                    continue
             if wiz_entry['vtype'] == 'string':
                 val = input_string(wiz_entry['prompt'])
             elif wiz_entry['vtype'] == 'string_default':
@@ -428,14 +449,9 @@ def do_wizard():
                 val = input_folder(wiz_entry['prompt'])
             elif wiz_entry['vtype'] == 'file_pattern':
                 val = input_filepattern("**/license.manifest", "'license.manifest'")
-
+            wiz_count += 1
             globals()[wiz_entry['value']] = val
 
-    if cvecheck:
-        args.cve_check_file = input_filepattern("**/*.cve", "CVE check output file")
-
-    repfile = input_file('Report file name', True, False)
-    if repfile != '':
-        args.report = repfile
-
+    if wiz_count == 0:
+        print("- Nothing for Wizard to do - continuing ...\n")
     return
