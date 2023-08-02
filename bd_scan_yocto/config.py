@@ -9,7 +9,7 @@ import re
 from blackduck import Client
 from bd_scan_yocto import global_values
 
-parser = argparse.ArgumentParser(description='Import Yocto build manifest to BD project version',
+parser = argparse.ArgumentParser(description='Black Duck scan Yocto project',
                                  prog='bd_scan_yocto')
 
 # parser.add_argument("projfolder", nargs="?", help="Yocto project folder to analyse", default=".")

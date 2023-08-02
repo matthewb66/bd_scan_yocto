@@ -19,10 +19,11 @@ def main():
 
     config.check_args()
 
-    config.find_files_folders()
+    if not config.args.cve_check_only:
+        config.find_files_folders()
 
-    if not config.args.nowizard:
-        config.do_wizard()
+        if not config.args.nowizard:
+            config.do_wizard()
 
     bd = config.connect()
     if bd is None:
@@ -30,20 +31,21 @@ def main():
         sys.exit(3)
     global_values.bd = bd
 
-    if not global_values.skip_detect_for_bitbake:
-        bd_scan_process.run_detect_for_bitbake()
-
     if not config.args.cve_check_only:
-        process.proc_yocto_project(global_values.manifest_file)
+        if not global_values.skip_detect_for_bitbake:
+            bd_scan_process.run_detect_for_bitbake()
+
+        if not config.args.cve_check_only:
+            process.proc_yocto_project(global_values.manifest_file)
 
     if global_values.cve_check_file != "" and not config.args.no_cve_check:
 
         print("\nProcessing CVEs ...")
 
-        if not config.args.cve_check_only:
-            print("Waiting for Black Duck server scan completion before continuing ...")
-            # Need to wait for scan to process into queue - sleep 15
-            time.sleep(0)
+        # if not config.args.cve_check_only:
+        #     print("Waiting for Black Duck server scan completion before continuing ...")
+        #     # Need to wait for scan to process into queue - sleep 15
+        #     time.sleep(0)
 
         try:
             print("- Reading Black Duck project ...")
@@ -65,9 +67,9 @@ def main():
         #     print("ERROR: Unable to determine scan status")
         #     sys.exit(3)
 
-        if not utils.wait_for_bom_completion(bd, ver):
-            print("ERROR: Unable to determine BOM status")
-            sys.exit(3)
+        # if not utils.wait_for_bom_completion(bd, ver):
+        #     print("ERROR: Unable to determine BOM status")
+        #     sys.exit(3)
 
         print("- Loading CVEs from cve_check log ...")
 
