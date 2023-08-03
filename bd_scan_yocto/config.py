@@ -3,8 +3,9 @@ import argparse
 import shutil
 import sys
 import glob
-import subprocess
+# import subprocess
 import re
+import tempfile
 
 from blackduck import Client
 from bd_scan_yocto import global_values
@@ -221,16 +222,23 @@ def connect():
     return bd
 
 
-def find_files_folders():
-    # tmpdir = ""
+def get_bitbake_env():
     if not global_values.debug:
         print("- Running 'bitbake -e' ...")
-        cmd = f"source {}; bitbake -e > {}"
+        tmpfile = tempfile.TemporaryFile()
+        cmd = f"source {global_values.oe_build_env}; bitbake -e > {tmpfile}"
+        retval = os.system(cmd)
+        if retval != 0:
+            print("ERROR: Cannot run 'bitbake command'")
+            sys.exit(2)
         # output = subprocess.check_output(['bitbake', '-e'], stderr=subprocess.STDOUT)
         # mystr = output.decode("utf-8").strip()
         # lines = mystr.splitlines()
 
-        for mline in lines:
+        with open(tmpfile, "r") as outfile:
+            mline = outfile.read()
+
+        # for mline in lines:
             if re.search("^(MANIFEST_FILE|DEPLOY_DIR|MACHINE_ARCH|DL_DIR|DEPLOY_DIR_RPM)=", mline):
 
                 # if re.search('^TMPDIR=', mline):
@@ -252,6 +260,8 @@ def find_files_folders():
                     global_values.rpm_dir = val
                     print("Bitbake Env: pm_dir={}".format(global_values.rpm_dir))
 
+
+def find_cvecheck_file():
     if global_values.cve_check_file == "" and global_values.cve_check:
         if global_values.target == '':
             print("WARNING: CVE check file not specified and it could not be determined as Target not specified")

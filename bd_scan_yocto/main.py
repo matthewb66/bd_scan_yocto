@@ -19,9 +19,11 @@ def main():
 
     config.check_args()
 
-    if not config.args.cve_check_only:
-        config.find_files_folders()
+    config.get_bitbake_env()
 
+    config.find_cvecheck_file()
+
+    if not config.args.cve_check_only:
         if not config.args.nowizard:
             config.do_wizard()
 

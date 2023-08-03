@@ -340,10 +340,10 @@ def proc_yocto_project(manfile):
     if len(pkg_list) > 0:
         tempdir = copy_pkg_files(pkg_list)
         if tempdir != '':
-            print("\nScanning package files with Synopsys Detect ...")
+            print("\nScanning package files with Synopsys Detect ...\n")
 
-            # bd_scan_process.run_detect_sigscan(tempdir, config.args.project, config.args.version,
-            #                                    config.args.blackduck_trust_cert)
+            bd_scan_process.run_detect_sigscan(tempdir, config.args.project, config.args.version,
+                                               config.args.blackduck_trust_cert)
 
         bd_process_bom.process_project(config.args.project, config.args.version)
 

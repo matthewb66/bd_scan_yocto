@@ -56,7 +56,9 @@ def run_detect_sigscan(tdir, proj, ver, trust):
     # output = subprocess.check_output(detect_cmd, stderr=subprocess.STDOUT)
     # mystr = output.decode("utf-8").strip()
     # lines = mystr.splitlines()
-    os.system(detect_cmd)
+    retval = os.system(detect_cmd)
+    if retval != 0:
+        print("ERROR: Unable to run Detect Signature scan on package files")
 
 
 def run_detect_for_bitbake():
@@ -78,4 +80,6 @@ def run_detect_for_bitbake():
     # output = subprocess.check_output(detect_cmd, stderr=subprocess.STDOUT)
     # mystr = output.decode("utf-8").strip()
     # lines = mystr.splitlines()
-    os.system(detect_cmd)
+    retval = os.system(detect_cmd)
+    if retval != 0:
+        print("ERROR: Unable to run Detect Bitbake scan")
