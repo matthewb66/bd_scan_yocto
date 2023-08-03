@@ -7,7 +7,7 @@ recipes_dict = {}
 recipe_layer_dict = {}
 layers_list = []
 bdio_proj_rel_list = []
-replace_recipes_dict = {}
+# replace_recipes_dict = {}
 
 bd_trustcert = False
 bd_api = ''
@@ -32,3 +32,5 @@ report_file = ''
 scan_layers_snippets = []
 scan_layers_full = []
 bblayers_file = ''
+pkgfiles_full = []
+pkgfiles_snippets = []

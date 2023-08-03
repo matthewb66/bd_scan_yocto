@@ -82,5 +82,3 @@ async def async_get_files(session, comp, token):
                     break
 
     return comp['componentVersion'], archive
-
-

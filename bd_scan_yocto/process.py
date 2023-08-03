@@ -2,7 +2,7 @@ import os
 # import uuid
 # import datetime
 import sys
-import re
+# import re
 import subprocess
 
 import glob
@@ -274,6 +274,10 @@ def proc_pkg_files():
             for file in files_list:
                 if not file.endswith(".done"):
                     files_to_copy.append(file)
+                    if global_values.recipe_layer_dict[recipe] in global_values.scan_layers_full:
+                        global_values.pkgfiles_full[recipe] = file
+                    if global_values.recipe_layer_dict[recipe] in global_values.scan_layers_snippets:
+                        global_values.pkgfiles_snippets[recipe] = file
                     found = True
                     print(' - Located package file:' + file)
 
@@ -283,6 +287,10 @@ def proc_pkg_files():
         files_list = glob.glob(pattern, recursive=True)
         if len(files_list) > 0:
             files_to_copy.extend(files_list)
+            if global_values.recipe_layer_dict[recipe] in global_values.scan_layers_full:
+                global_values.pkgfiles_full[recipe] = files_list
+            if global_values.recipe_layer_dict[recipe] in global_values.scan_layers_snippets:
+                global_values.pkgfiles_snippets[recipe] = files_list
             found = True
 
         if not found:
@@ -347,8 +355,8 @@ def proc_yocto_project(manfile):
 
         bd_process_bom.process_project(config.args.project, config.args.version)
 
-def process_patched_cves(bd, version, vuln_list):
 
+def process_patched_cves(bd, version, vuln_list):
     try:
         # headers = {'Accept': 'application/vnd.blackducksoftware.bill-of-materials-6+json'}
         # resp = bd.get_json(version['_meta']['href'] + '/vulnerable-bom-components?limit=5000', headers=headers)
@@ -389,29 +397,29 @@ def process_patched_cves(bd, version, vuln_list):
     return True
 
 
-def proc_replacefile():
-    print("- Processing replacefile {}: ...".format(config.args.replacefile))
-    try:
-        r = open(config.args.replacefile, "r")
-        for line in r:
-            # if re.search('^LAYER ', line):
-            #     rep_layers[line.split()[1]] = line.split()[2]
-            if re.search('^RECIPE ', line):
-                origrec = line.split()[1]
-                reprec = line.split()[2]
-                if len(origrec.split('/')) != 3 or len(reprec.split('/')) != 3:
-                    print('Ignored line {} - complete layer/recipe/revision required'.format(line))
-                    continue
-                global_values.replace_recipes_dict[line.split()[1]] = line.split()[2]
-            else:
-                print('Ignored line {}'.format(line))
-        r.close()
-    except Exception as e:
-        print("ERROR: Unable to read replacefile file {}\n".format(config.args.replacefile) + str(e))
-        return False
-
-    print("	{} replace entries processed".format(len(global_values.replace_recipes_dict)))
-    return True
+# def proc_replacefile():
+#     print("- Processing replacefile {}: ...".format(config.args.replacefile))
+#     try:
+#         r = open(config.args.replacefile, "r")
+#         for line in r:
+#             # if re.search('^LAYER ', line):
+#             #     rep_layers[line.split()[1]] = line.split()[2]
+#             if re.search('^RECIPE ', line):
+#                 origrec = line.split()[1]
+#                 reprec = line.split()[2]
+#                 if len(origrec.split('/')) != 3 or len(reprec.split('/')) != 3:
+#                     print('Ignored line {} - complete layer/recipe/revision required'.format(line))
+#                     continue
+#                 global_values.replace_recipes_dict[line.split()[1]] = line.split()[2]
+#             else:
+#                 print('Ignored line {}'.format(line))
+#         r.close()
+#     except Exception as e:
+#         print("ERROR: Unable to read replacefile file {}\n".format(config.args.replacefile) + str(e))
+#         return False
+#
+#     print("	{} replace entries processed".format(len(global_values.replace_recipes_dict)))
+#     return True
 
 
 def get_vulns(bd, version):
