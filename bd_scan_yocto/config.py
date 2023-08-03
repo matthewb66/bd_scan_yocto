@@ -222,20 +222,13 @@ def connect():
 
 
 def find_files_folders():
-    # New Logic 2023_07
-    # Need to find:
-    # - MANIFEST_FILE
-    # - DEPLOY_DIR
-    # - TMPDIR
-    # - MACHINE
-    # - rootfs.cve
-
     # tmpdir = ""
     if not global_values.debug:
         print("- Running 'bitbake -e' ...")
-        output = subprocess.check_output(['bitbake', '-e'], stderr=subprocess.STDOUT)
-        mystr = output.decode("utf-8").strip()
-        lines = mystr.splitlines()
+        cmd = f"source {}; bitbake -e > {}"
+        # output = subprocess.check_output(['bitbake', '-e'], stderr=subprocess.STDOUT)
+        # mystr = output.decode("utf-8").strip()
+        # lines = mystr.splitlines()
 
         for mline in lines:
             if re.search("^(MANIFEST_FILE|DEPLOY_DIR|MACHINE_ARCH|DL_DIR|DEPLOY_DIR_RPM)=", mline):
