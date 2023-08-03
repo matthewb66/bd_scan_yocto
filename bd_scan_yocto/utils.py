@@ -3,6 +3,7 @@ import json
 import sys
 import time
 import requests
+import subprocess
 
 from bd_scan_yocto import global_values
 from bd_scan_yocto import config
@@ -448,3 +449,9 @@ consider using --repfile with a version replacement (available versions {})".for
             print(' Report file {} written containing list of mapped layers/recipes.'.format(config.args.report))
 
     return
+
+
+def run_cmd(command):
+    proc = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+    proc_stdout = proc.communicate()[0].strip()
+    return proc_stdout

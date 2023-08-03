@@ -5,10 +5,11 @@ import sys
 import glob
 # import subprocess
 import re
-import tempfile
+# import tempfile
 
 from blackduck import Client
 from bd_scan_yocto import global_values
+from bd_scan_yocto import utils
 
 parser = argparse.ArgumentParser(description='Black Duck scan Yocto project',
                                  prog='bd_scan_yocto')
@@ -181,6 +182,9 @@ def check_args():
     if args.report != "":
         global_values.report_file = args.report
 
+    if args.target != "":
+        global_values.target = args.target
+
     if args.skip_detect_for_bitbake:
         global_values.skip_detect_for_bitbake = True
 
@@ -225,20 +229,17 @@ def connect():
 def get_bitbake_env():
     if not global_values.debug:
         print("- Running 'bitbake -e' ...")
-        tmpfile = tempfile.TemporaryFile()
-        cmd = f"source {global_values.oe_build_env}; bitbake -e > {tmpfile}"
-        retval = os.system(cmd)
-        if retval != 0:
+
+        cmd = f"bash -c 'source {global_values.oe_build_env}; bitbake -e'"
+        ret = utils.run_cmd(cmd)
+        if ret == b'':
             print("ERROR: Cannot run 'bitbake command'")
             sys.exit(2)
         # output = subprocess.check_output(['bitbake', '-e'], stderr=subprocess.STDOUT)
         # mystr = output.decode("utf-8").strip()
-        # lines = mystr.splitlines()
+        lines = ret.decode("utf-8").split('\n')
 
-        with open(tmpfile, "r") as outfile:
-            mline = outfile.read()
-
-        # for mline in lines:
+        for mline in lines:
             if re.search("^(MANIFEST_FILE|DEPLOY_DIR|MACHINE_ARCH|DL_DIR|DEPLOY_DIR_RPM)=", mline):
 
                 # if re.search('^TMPDIR=', mline):

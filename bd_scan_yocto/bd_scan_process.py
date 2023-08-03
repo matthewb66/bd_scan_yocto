@@ -51,6 +51,7 @@ def run_detect_sigscan(tdir, proj, ver, trust):
     if trust:
         detect_cmd += "--blackduck.trust.cert=true "
     detect_cmd += "--detect.wait.for.results=true "
+    detect_cmd += "--detect.wait.for.results=true "
 
     print("\nRunning Detect on identified packages ...")
     # output = subprocess.check_output(detect_cmd, stderr=subprocess.STDOUT)
