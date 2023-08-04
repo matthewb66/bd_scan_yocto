@@ -51,7 +51,6 @@ def run_detect_sigscan(tdir, proj, ver, trust):
     if trust:
         detect_cmd += "--blackduck.trust.cert=true "
     detect_cmd += "--detect.wait.for.results=true "
-    detect_cmd += "--detect.wait.for.results=true "
 
     print("\nRunning Detect on identified packages ...")
     # output = subprocess.check_output(detect_cmd, stderr=subprocess.STDOUT)
@@ -60,6 +59,7 @@ def run_detect_sigscan(tdir, proj, ver, trust):
     retval = os.system(detect_cmd)
     if retval != 0:
         print("ERROR: Unable to run Detect Signature scan on package files")
+        sys.exit(2)
 
 
 def run_detect_for_bitbake():
@@ -77,10 +77,11 @@ def run_detect_for_bitbake():
     detect_cmd += f"--detect.bitbake.package.names={global_values.target} "
     detect_cmd += "--detect.bitbake.dependency.types.excluded=BUILD "
 
-    print("\nRunning Detect on Bitbake project ...")
+    print("\nRUNNING DETECT ON BITBAKE PROJECT ...")
     # output = subprocess.check_output(detect_cmd, stderr=subprocess.STDOUT)
     # mystr = output.decode("utf-8").strip()
     # lines = mystr.splitlines()
     retval = os.system(detect_cmd)
     if retval != 0:
         print("ERROR: Unable to run Detect Bitbake scan")
+        sys.exit(2)

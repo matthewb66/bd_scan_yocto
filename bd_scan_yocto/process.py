@@ -260,6 +260,7 @@ def proc_pkg_files():
         print('ERROR: Download dir or RPM package dir empty - cannot continue\n')
         sys.exit(3)
     files_to_copy = []
+    files_to_expand = []
 
     for recipe in global_values.recipes_dict.keys():
         found = False
@@ -273,11 +274,11 @@ def proc_pkg_files():
         if len(files_list) > 0:
             for file in files_list:
                 if not file.endswith(".done"):
-                    files_to_copy.append(file)
-                    if global_values.recipe_layer_dict[recipe] in global_values.scan_layers_full:
-                        global_values.pkgfiles_full[recipe] = file
-                    if global_values.recipe_layer_dict[recipe] in global_values.scan_layers_snippets:
-                        global_values.pkgfiles_snippets[recipe] = file
+                    if len(global_values.extended_scan_layers) > 0 and \
+                            global_values.recipe_layer_dict[recipe] in global_values.extended_scan_layers:
+                        files_to_expand.append(file)
+                    else:
+                        files_to_copy.append(file)
                     found = True
                     print(' - Located package file:' + file)
 
@@ -287,37 +288,50 @@ def proc_pkg_files():
         files_list = glob.glob(pattern, recursive=True)
         if len(files_list) > 0:
             files_to_copy.extend(files_list)
-            if global_values.recipe_layer_dict[recipe] in global_values.scan_layers_full:
-                global_values.pkgfiles_full[recipe] = files_list
-            if global_values.recipe_layer_dict[recipe] in global_values.scan_layers_snippets:
-                global_values.pkgfiles_snippets[recipe] = files_list
             found = True
 
         if not found:
             print(" - No package file found")
 
     # print(files_to_copy)
-    return files_to_copy
+    return files_to_copy, files_to_expand
 
 
-def copy_pkg_files(pkgs):
-    import tempfile
+def copy_pkg_files(pkgs, tmpdir):
     import shutil
 
-    temppkgdir = tempfile.mkdtemp(prefix="bd_sig_pkgs")
     # print(temppkgdir)
     count = 0
     for pkg in pkgs:
-        shutil.copy(pkg, temppkgdir)
+        shutil.copy(pkg, tmpdir)
         count += 1
 
-    print("\n- Copied {} package files ...".format(count))
-    if count > 0:
-        return temppkgdir
-    return
+    print("\nCOPYING PACKAGE FILES\n- Copied {} package files ...".format(count))
+    return count
+
+
+def expand_pkg_files(pkgs, tmpdir):
+    import shutil
+    import tarfile
+
+    # print(temppkgdir)
+    count = 0
+    for pkg_path in pkgs:
+        pkg_file = os.path.basename(pkg_path)
+        pkg_name = pkg_file.split('.')[0]
+        extract_dir = os.path.join(tmpdir, pkg_name)
+        if not os.path.isdir(extract_dir):
+            os.mkdir(extract_dir)
+        tfile = tarfile.open(pkg_path)
+        tfile.extractall(extract_dir)
+        count += 1
+
+    print("- Extracted {} package files ...".format(count))
+    return count
 
 
 def proc_yocto_project(manfile):
+    import tempfile
     try:
         i = open(manfile, "r")
     except Exception as e:
@@ -331,11 +345,11 @@ def proc_yocto_project(manfile):
         print('ERROR: Unable to read license.manifest file {} \n'.format(manfile) + str(e))
         sys.exit(3)
 
-    print("\nProcessing Bitbake project:")
+    print("\nPROCESSING BITBAKE PROJECT:")
     if not proc_license_manifest(liclines):
         sys.exit(3)
 
-    if len(global_values.scan_layers_full) > 0 or len(global_values.scan_layers_snippets) > 0:
+    if len(global_values.extended_scan_layers) > 0:
         proc_layers_in_recipes()
     # proc_recipe_revisions()
     # if not config.args.no_kb_check:
@@ -343,17 +357,22 @@ def proc_yocto_project(manfile):
     # proc_layers()
     # proc_recipes()
 
-    print("\nProcessing package files ...")
-    pkg_list = proc_pkg_files()
-    if len(pkg_list) > 0:
-        tempdir = copy_pkg_files(pkg_list)
-        if tempdir != '':
-            print("\nScanning package files with Synopsys Detect ...\n")
+    print("\nPROCESSING PACKAGE FILES ...")
+    pkg_copy_list, pkg_expand_list = proc_pkg_files()
+    temppkgdir = tempfile.mkdtemp(prefix="bd_sig_pkgs")
 
-            bd_scan_process.run_detect_sigscan(tempdir, config.args.project, config.args.version,
-                                               config.args.blackduck_trust_cert)
+    processed_files = 0
+    if len(pkg_copy_list) > 0:
+        processed_files += copy_pkg_files(pkg_copy_list, temppkgdir)
+    if len(pkg_expand_list) > 0:
+        processed_files += expand_pkg_files(pkg_expand_list, temppkgdir)
 
-        bd_process_bom.process_project(config.args.project, config.args.version)
+    print("\nRUNNING SYNOPSYS DETECT ON PACKAGE FILES ...\n")
+
+    bd_scan_process.run_detect_sigscan(temppkgdir, config.args.project, config.args.version,
+                                       config.args.blackduck_trust_cert)
+
+    bd_process_bom.process_project(config.args.project, config.args.version)
 
 
 def process_patched_cves(bd, version, vuln_list):

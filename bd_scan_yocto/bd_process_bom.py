@@ -118,7 +118,7 @@ def process_bom(bd, bom_components):
 	all_comp_count = len(bom_components)
 	ignored_comps = componentlist.count_ignored_comps()
 
-	print("Processed Black Duck project from BD Server {}".format(global_values.bd_url))
+	print("\nPROCESSING BLACK DUCK PROJECT\nBlack Duck Server = {}".format(global_values.bd_url))
 	print(f"Component counts:\n- Total Components {all_comp_count}")
 	print(f"- Already Ignored Components {ignored_comps}")
 
@@ -126,27 +126,28 @@ def process_bom(bd, bom_components):
 
 
 def ignore_components(bd, ver_dict):
-	print('Getting components from project ... found ', end='')
+	# print('Getting components from project ... found ', end='')
 	bom_compsdict = get_bom_components(bd, ver_dict)
-	print("{}".format(str(len(bom_compsdict))))
+	# print("{}".format(str(len(bom_compsdict))))
 
-	print('\nASYNC - Getting component data ... ')
+	print('\n- Getting component data ... ')
 
 	if platform.system() == "Windows":
 		asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-	pkgmatch_dict = asyncio.run(bd_asyncdata.async_main(bom_compsdict, bd.session.auth.bearer_token, ver_dict))
+	pkg_ignore_dict = asyncio.run(bd_asyncdata.async_main(bom_compsdict, bd.session.auth.bearer_token, ver_dict))
 
 	ignore_comps = []
 	count_ignored = 0
 	ignore_array = []
 
-	if len(global_values.scan_layers_full) > 0:
-		pass
+	print("- Ignoring partial components ...")
+	count = 0
 	for comp in bom_compsdict.keys():
-		if not pkgmatch_dict[comp]:
+		if pkg_ignore_dict[comp]:
 			# Ignore this component
 			ignore_array.append(bom_compsdict[comp]['_meta']['href'])
 			count_ignored += 1
+			count += 1
 			if count_ignored >= 99:
 				ignore_comps.append(ignore_array)
 				ignore_array = []
@@ -173,4 +174,5 @@ def ignore_components(bd, ver_dict):
 		except requests.HTTPError as err:
 			bd.http_error_handler(err)
 
+	print(f"- Ignored {count} components")
 	return

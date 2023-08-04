@@ -51,12 +51,12 @@ parser.add_argument("--bblayers_out",
 parser.add_argument("--wizard", help="Start command line wizard (Wizard will run by default if config incomplete)",
                     action='store_true')
 parser.add_argument("--nowizard", help="Do not use wizard (command line batch only)", action='store_true')
-parser.add_argument("--scan_layers_snippets",
+parser.add_argument("--extended_scan_layers",
                     help="Specify a command-delimited list of layers where recipes will also be Snippet scanned",
                     default="")
-parser.add_argument("--scan_layers_full",
-                    help="Specify a command-delimited list of layers where recipes will be signature scanned"
-                         "fully (not removing internal components)", default="")
+# parser.add_argument("--scan_layers_full",
+#                     help="Specify a command-delimited list of layers where recipes will be signature scanned"
+#                          "fully (not removing internal components)", default="")
 # parser.add_argument("--deploy_dir",
 #                     help="Top Level directory where artefacts are written (usually poky/build/tmp/deploy)",
 #                     default="")
@@ -188,16 +188,16 @@ def check_args():
     if args.skip_detect_for_bitbake:
         global_values.skip_detect_for_bitbake = True
 
-    if args.scan_layers_snippets != '':
-        global_values.scan_layers_snippets = args.scan_layers_snippets.split(',')
-
-    if args.scan_layers_full != '':
-        global_values.scan_layers_full = args.scan_layers_full.split(',')
+    if args.extended_scan_layers != '':
+        global_values.extended_scan_layers = args.extended_scan_layers.split(',')
+    #
+    # if args.scan_layers_full != '':
+    #     global_values.scan_layers_full = args.scan_layers_full.split(',')
 
     if args.bblayers_out != "":
-        if args.scan_layers_snippets == '' and args.scan_layers_full == '':
-            print(f"INFO: Bitbake-layers output file {args.bblayers_out} is not required unless --scan_layers_snippets "
-                  "or --scan_layers_full is specified")
+        if args.extended_scan_layers:
+            print(f"INFO: Bitbake-layers output file {args.bblayers_out} is not required unless "
+                  "--extended_scan_layers is specified")
         if os.path.isfile(args.bblayers_out):
             global_values.bblayers_file = args.bblayers_out
         else:
@@ -228,6 +228,7 @@ def connect():
 
 def get_bitbake_env():
     if not global_values.debug:
+        print("GETTING YOCTO ENVIRONMENT")
         print("- Running 'bitbake -e' ...")
 
         cmd = f"bash -c 'source {global_values.oe_build_env}; bitbake -e'"

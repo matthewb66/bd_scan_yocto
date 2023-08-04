@@ -22,28 +22,28 @@ async def async_main(comps, token, ver):
         all_files = dict(await asyncio.gather(*file_tasks))
 
         await asyncio.sleep(0.250)
-        print(f'Got {count} component data elements')
+        print(f'- {count} components ')
 
         print(all_files)
 
     return all_files
 
 
-async def async_get_data(session, compurl, token):
-    if global_values.bd_trustcert:
-        ssl = False
-    else:
-        ssl = None
-
-    thishref = compurl + '/origins?limit=1000'
-    headers = {
-        'accept': "application/vnd.blackducksoftware.bill-of-materials-6+json",
-        'Authorization': f'Bearer {token}',
-    }
-    # resp = globals.bd.get_json(thishref, headers=headers)
-    async with session.get(thishref, headers=headers, ssl=ssl) as resp:
-        result_data = await resp.json()
-    return 1
+# async def async_get_data(session, compurl, token):
+#     if global_values.bd_trustcert:
+#         ssl = False
+#     else:
+#         ssl = None
+#
+#     thishref = compurl + '/origins?limit=1000'
+#     headers = {
+#         'accept': "application/vnd.blackducksoftware.bill-of-materials-6+json",
+#         'Authorization': f'Bearer {token}',
+#     }
+#     # resp = globals.bd.get_json(thishref, headers=headers)
+#     async with session.get(thishref, headers=headers, ssl=ssl) as resp:
+#         result_data = await resp.json()
+#     return 1
 
 
 async def async_get_files(session, comp, token):
@@ -52,7 +52,7 @@ async def async_get_files(session, comp, token):
     else:
         ssl = None
 
-    retfile = "NOASSERTION"
+    # retfile = "NOASSERTION"
     hrefs = comp['_meta']['links']
 
     link = next((item for item in hrefs if item["rel"] == "matched-files"), None)
@@ -63,7 +63,7 @@ async def async_get_files(session, comp, token):
             'accept': "application/vnd.blackducksoftware.bill-of-materials-6+json",
         }
 
-        archive = False
+        archive_ignore = False
         async with session.get(thishref, headers=headers, ssl=ssl) as resp:
             result_data = await resp.json()
             # cfile = result_data['items']
@@ -76,9 +76,9 @@ async def async_get_files(session, comp, token):
             #             retfile = rfile
             for item in result_data['items']:
                 # if item['filePath']['path'] == item['filePath']['fileName']:
-                print(item['filePath']['path'] + ':' + item['filePath']['archiveContext'])
-                if item['filePath']['compositePathContext'] == item['filePath']['path'] + '#':
-                    archive = True
+                # print(item['filePath']['path'] + ':' + item['filePath']['archiveContext'])
+                if item['filePath']['compositePathContext'] != item['filePath']['path'] + '#':
+                    archive_ignore = True
                     break
 
-    return comp['componentVersion'], archive
+    return comp['componentVersion'], archive_ignore
