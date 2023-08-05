@@ -1,12 +1,17 @@
 import aiohttp
 import asyncio
 # import platform
-# import logging
+import logging
 
 from bd_scan_yocto import global_values
 
+if global_values.debug:
+    logging.basicConfig(level=logging.DEBUG)
+else:
+    logging.basicConfig(level=logging.INFO)
 
-async def async_main(comps, token, ver):
+
+async def async_main(comps, token):
     async with aiohttp.ClientSession(trust_env=True) as session:
         data_tasks = []
         file_tasks = []
@@ -22,28 +27,11 @@ async def async_main(comps, token, ver):
         all_files = dict(await asyncio.gather(*file_tasks))
 
         await asyncio.sleep(0.250)
-        print(f'- {count} components ')
-
-        print(all_files)
+        # print(f'- {count} components ')
+        #
+        # print(all_files)
 
     return all_files
-
-
-# async def async_get_data(session, compurl, token):
-#     if global_values.bd_trustcert:
-#         ssl = False
-#     else:
-#         ssl = None
-#
-#     thishref = compurl + '/origins?limit=1000'
-#     headers = {
-#         'accept': "application/vnd.blackducksoftware.bill-of-materials-6+json",
-#         'Authorization': f'Bearer {token}',
-#     }
-#     # resp = globals.bd.get_json(thishref, headers=headers)
-#     async with session.get(thishref, headers=headers, ssl=ssl) as resp:
-#         result_data = await resp.json()
-#     return 1
 
 
 async def async_get_files(session, comp, token):

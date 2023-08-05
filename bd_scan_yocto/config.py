@@ -6,6 +6,7 @@ import glob
 # import subprocess
 import re
 # import tempfile
+import logging
 
 from blackduck import Client
 from bd_scan_yocto import global_values
@@ -16,15 +17,12 @@ parser = argparse.ArgumentParser(description='Black Duck scan Yocto project',
 
 # parser.add_argument("projfolder", nargs="?", help="Yocto project folder to analyse", default=".")
 
-parser.add_argument("--blackduck_url", type=str, help="Black Duck server URL", default="")
-parser.add_argument("--blackduck_api_token", type=str, help="Black Duck API token ", default="")
+parser.add_argument("--blackduck_url", type=str, help="Black Duck server URL (REQUIRED)", default="")
+parser.add_argument("--blackduck_api_token", type=str, help="Black Duck API token (REQUIRED)", default="")
 parser.add_argument("--blackduck_trust_cert", help="Black Duck trust server cert", action='store_true')
 parser.add_argument("--detect-jar-path", help="Synopsys Detect jar path", default="")
 parser.add_argument("-p", "--project", help="Black Duck project to create (REQUIRED)", default="")
 parser.add_argument("-v", "--version", help="Black Duck project version to create (REQUIRED)", default="")
-# parser.add_argument("-y", "--yocto_build_folder",
-#                     help="Yocto build folder (required if CVE check required or manifest file not specified)",
-#                     default=".")
 parser.add_argument("--oe_build_env",
                     help="Yocto build environment config file (default 'oe-init-build-env')",
                     default="oe-init-build-env")
@@ -33,33 +31,25 @@ parser.add_argument("-m", "--manifest",
                     help="Built license.manifest file)",
                     default="")
 parser.add_argument("--machine", help="Machine Architecture (for example 'qemux86-64')",
-                    default="")
+                    default="qemux86-64")
 parser.add_argument("--skip_detect_for_bitbake", help="Skip running Detect for Bitbake dependencies",
                     action='store_true')
-parser.add_argument("--cve_check_only", help="Only check for patched CVEs from cve_check and update existing project",
+parser.add_argument("--cve_check_only", help="Only check for patched CVEs from cve_check and update existing project "
+                                             "skipping scans",
                     action='store_true')
 parser.add_argument("--no_cve_check", help="Skip check for and update of patched CVEs", action='store_true')
 parser.add_argument("--cve_check_file",
                     help="CVE check output file (if not specified will be determined from conf files)", default="")
-parser.add_argument("--report",
-                    help="Output report.txt file of matched recipes",
-                    default="bd_scan_report.txt")
-parser.add_argument("--bblayers_out",
-                    help='''Specify file containing 'bitbake-layers show-recipes' output (do not run command) & bypass
-                    checks for revisions in recipe_info files''',
-                    default="")
 parser.add_argument("--wizard", help="Start command line wizard (Wizard will run by default if config incomplete)",
                     action='store_true')
 parser.add_argument("--nowizard", help="Do not use wizard (command line batch only)", action='store_true')
 parser.add_argument("--extended_scan_layers",
-                    help="Specify a command-delimited list of layers where recipes will also be Snippet scanned",
+                    help="Specify a command-delimited list of layers where packages within recipes will be expanded"
+                         "and Snippet scanned",
                     default="")
-# parser.add_argument("--scan_layers_full",
-#                     help="Specify a command-delimited list of layers where recipes will be signature scanned"
-#                          "fully (not removing internal components)", default="")
-# parser.add_argument("--deploy_dir",
-#                     help="Top Level directory where artefacts are written (usually poky/build/tmp/deploy)",
-#                     default="")
+parser.add_argument("--exclude_layers",
+                    help="Specify a command-delimited list of layers where packages within recipes will not be "
+                         "Signature scanned", default="")
 parser.add_argument("--download_dir",
                     help="Download directory where original packages are downloaded (usually poky/build/downloads)",
                     default="")
@@ -67,9 +57,15 @@ parser.add_argument("--rpm_dir",
                     help="Download directory where rpm packages are downloaded "
                          "(usually poky/build/tmp/deploy/rpm/<ARCH>)",
                     default="")
-parser.add_argument("--debug", help="DEBUG mode - skip various checks", action='store_true')
+parser.add_argument("--testmode", help="Test mode - skip various checks", action='store_true')
+parser.add_argument("--debug", help="Debug logging mode", action='store_true')
 
 args = parser.parse_args()
+
+if args.debug:
+    logging.basicConfig(level=logging.DEBUG)
+else:
+    logging.basicConfig(level=logging.INFO)
 
 
 def check_args():
@@ -83,9 +79,12 @@ def check_args():
 
     if args.debug:
         global_values.debug = True
+
+    if args.testmode:
+        global_values.testmode = True
     else:
         if not os.path.isfile(global_values.oe_build_env):
-            print(f"ERROR: Cannot find Yocto build environment config file '{global_values.oe_build_env}'")
+            logging.error(f"Cannot find Yocto build environment config file '{global_values.oe_build_env}'")
             sys.exit(2)
 
         # if os.system(f"source {global_values.oe_build_env}; bitbake --help >/dev/null")
@@ -94,56 +93,44 @@ def check_args():
         #     sys.exit(2)
 
         if shutil.which("java") is None:
-            print("ERROR: Java runtime is required and should be on the PATH")
+            logging.error("Java runtime is required and should be on the PATH")
             sys.exit(2)
 
     url = os.environ.get('BLACKDUCK_URL')
     if args.blackduck_url != '':
         global_values.bd_url = args.blackduck_url
-    elif url != '':
+    elif url is not None:
         global_values.bd_url = url
     else:
-        print("WARNING: Black Duck URL not specified")
+        logging.warning("Black Duck URL not specified")
 
     if args.project != "" and args.version != "":
         global_values.bd_project = args.project
         global_values.bd_version = args.version
     else:
-        print("WARNING: Black Duck project/version not specified")
+        logging.warning("Black Duck project/version not specified")
 
     api = os.environ.get('BLACKDUCK_API_TOKEN')
     if args.blackduck_api_token != '':
         global_values.bd_api = args.blackduck_api_token
-    elif api != '':
+    elif api is not None:
         global_values.bd_api = api
     else:
-        print("WARNING: Black Duck API Token not specified")
+        logging.warning("Black Duck API Token not specified")
 
     trustcert = os.environ.get('BLACKDUCK_TRUST_CERT')
     if trustcert == 'true' or args.blackduck_trust_cert:
         global_values.bd_trustcert = True
 
-    # if args.yocto_build_folder != '':
-    #     if not os.path.isdir(args.yocto_build_folder):
-    #         print(f"WARNING: Specified Yocto build folder '{args.yocto_build_folder}' does not exist")
-    #     else:
-    #         global_values.yocto_build_folder = os.path.abspath(args.yocto_build_folder)
-
-    # if args.deploy_dir != '':
-    #     if not os.path.isdir(args.deploy_dir):
-    #         print(f"WARNING: Specified deploy folder '{args.deploy_dir}' does not exist")
-    #     else:
-    #         global_values.deploy_dir = os.path.abspath(args.deploy_dir)
-
     if args.download_dir != '':
         if not os.path.isdir(args.download_dir):
-            print(f"WARNING: Specified download package folder '{args.download_dir}' does not exist")
+            logging.warning(f"Specified download package folder '{args.download_dir}' does not exist")
         else:
             global_values.download_dir = os.path.abspath(args.download_dir)
 
     if args.rpm_dir != '':
         if not os.path.isdir(args.rpm_dir):
-            print(f"WARNING: Specified download rpm folder '{args.rpm_dir}' does not exist")
+            logging.warning(f"Specified download rpm folder '{args.rpm_dir}' does not exist")
         else:
             global_values.rpm_dir = os.path.abspath(args.rpm_dir)
 
@@ -152,21 +139,21 @@ def check_args():
 
     if args.cve_check_file != "":
         if args.no_cve_check:
-            print("ERROR: Options cve_check_file and no_cve_check cannot be specified together")
+            logging.error("Options cve_check_file and no_cve_check cannot be specified together")
             sys.exit(2)
 
         if not os.path.isfile(args.cve_check_file):
-            print(f"WARNING: CVE check output file '{args.cve_check_file}' does not exist")
+            logging.warning(f"CVE check output file '{args.cve_check_file}' does not exist")
         else:
             global_values.cve_check_file = args.cve_check_file
 
     if args.cve_check_only and args.no_cve_check:
-        print("ERROR: Options --cve_check_only and --no_cve_check cannot be specified together")
+        logging.error("Options --cve_check_only and --no_cve_check cannot be specified together")
         sys.exit(2)
 
     if args.manifest != "":
         if not os.path.isfile(args.manifest):
-            print(f"WARNING: Manifest file '{args.manifest}' does not exist")
+            logging.warning(f"Manifest file '{args.manifest}' does not exist")
         else:
             global_values.manifest_file = args.manifest
 
@@ -174,13 +161,13 @@ def check_args():
         global_values.machine = args.machine
 
     if args.detect_jar_path != "" and not os.path.isfile(args.detect_jar_path):
-        print(f"ERROR: Detect jar file {args.detect_jar_path} does not exist")
+        logging.error(f"Detect jar file {args.detect_jar_path} does not exist")
         sys.exit(2)
     else:
         global_values.detect_jar = args.detect_jar_path
 
-    if args.report != "":
-        global_values.report_file = args.report
+    # if args.report != "":
+    #     global_values.report_file = args.report
 
     if args.target != "":
         global_values.target = args.target
@@ -190,18 +177,18 @@ def check_args():
 
     if args.extended_scan_layers != '':
         global_values.extended_scan_layers = args.extended_scan_layers.split(',')
-    #
-    # if args.scan_layers_full != '':
-    #     global_values.scan_layers_full = args.scan_layers_full.split(',')
 
-    if args.bblayers_out != "":
-        if args.extended_scan_layers:
-            print(f"INFO: Bitbake-layers output file {args.bblayers_out} is not required unless "
-                  "--extended_scan_layers is specified")
-        if os.path.isfile(args.bblayers_out):
-            global_values.bblayers_file = args.bblayers_out
-        else:
-            print(f"WARNING: bitbake-layers output file {args.bblayers_out} does not exist - skipping ...")
+    if args.exclude_layers != '':
+        global_values.exclude_layers = args.exclude_layers.split(',')
+
+    # if args.bblayers_out != "":
+    #     if args.extended_scan_layers:
+    #         print(f"INFO: Bitbake-layers output file {args.bblayers_out} is not required unless "
+    #               "--extended_scan_layers is specified")
+    #     if os.path.isfile(args.bblayers_out):
+    #         global_values.bblayers_file = args.bblayers_out
+    #     else:
+    #         print(f"WARNING: bitbake-layers output file {args.bblayers_out} does not exist - skipping ...")
 
     return
 
@@ -219,22 +206,22 @@ def connect():
     try:
         bd.list_resources()
     except Exception as exc:
-        print('WARNING: Unable to connect to Black Duck server - {}'.format(str(exc)))
+        logging.warning(f'Unable to connect to Black Duck server - {str(exc)}')
         return None
 
-    print('INFO: Connected to Black Duck server {}'.format(global_values.bd_url))
+    logging.info(f'Connected to Black Duck server {global_values.bd_url}')
     return bd
 
 
 def get_bitbake_env():
-    if not global_values.debug:
-        print("GETTING YOCTO ENVIRONMENT")
-        print("- Running 'bitbake -e' ...")
+    if not global_values.testmode:
+        logging.info("GETTING YOCTO ENVIRONMENT")
+        logging.info("- Running 'bitbake -e' ...")
 
         cmd = f"bash -c 'source {global_values.oe_build_env}; bitbake -e'"
         ret = utils.run_cmd(cmd)
         if ret == b'':
-            print("ERROR: Cannot run 'bitbake command'")
+            logging.error("Cannot run 'bitbake -e'")
             sys.exit(2)
         # output = subprocess.check_output(['bitbake', '-e'], stderr=subprocess.STDOUT)
         # mystr = output.decode("utf-8").strip()
@@ -248,25 +235,41 @@ def get_bitbake_env():
                 val = mline.split('=')[1].strip('\"')
                 if global_values.manifest_file == '' and re.search('^MANIFEST_FILE=', mline):
                     global_values.manifest = val
-                    print("Bitbake Env: manifestfile={}".format(global_values.manifest_file))
+                    logging.info(f"Bitbake Env: manifestfile={global_values.manifest_file}")
                 # elif global_values.deploy_dir == '' and re.search('^DEPLOY_DIR=', mline):
                 #     global_values.deploy_dir = val
                 #     print("Bitbake Env: deploydir={}".format(global_values.deploy_dir))
                 elif global_values.machine == '' and re.search('^MACHINE_ARCH=', mline):
                     global_values.machine = val
-                    print("Bitbake Env: machine={}".format(global_values.machine))
+                    logging.info(f"Bitbake Env: machine={global_values.machine}")
                 elif global_values.download_dir == '' and re.search('^DL_DIR=', mline):
                     global_values.download_dir = val
-                    print("Bitbake Env: download_dir={}".format(global_values.download_dir))
+                    logging.info(f"Bitbake Env: download_dir={global_values.download_dir}")
                 elif global_values.rpm_dir == '' and re.search('^DEPLOY_DIR_RPM=', mline):
                     global_values.rpm_dir = val
-                    print("Bitbake Env: pm_dir={}".format(global_values.rpm_dir))
+                    logging.info(f"Bitbake Env: pm_dir={global_values.rpm_dir}")
 
 
-def find_cvecheck_file():
+def find_yocto_files():
+    if global_values.manifest_file == "":
+        if global_values.target == '':
+            logging.warning("Manifest file not specified and it could not be determined as Target not specified")
+        else:
+            imgdir = os.path.join(global_values.deploy_dir, "licenses", global_values.machine)
+            manifest = ""
+            for file in sorted(os.listdir(imgdir)):
+                if file == 'license.manifest':
+                    manifest = os.path.join(imgdir, file)
+
+            if not os.path.isfile(manifest):
+                logging.warning(f"Manifest file {manifest} could not be located")
+            else:
+                logging.info(f"Located CVE check output file {manifest}")
+                global_values.cve_check_file = manifest
+
     if global_values.cve_check_file == "" and global_values.cve_check:
         if global_values.target == '':
-            print("WARNING: CVE check file not specified and it could not be determined as Target not specified")
+            logging.warning("CVE check file not specified and it could not be determined as Target not specified")
         else:
             imgdir = os.path.join(global_values.deploy_dir, "images", global_values.machine)
             cvefile = ""
@@ -276,9 +279,9 @@ def find_cvecheck_file():
                     cvefile = os.path.join(imgdir, file)
 
             if not os.path.isfile(cvefile):
-                print("WARNING: CVE check file could not be located")
+                logging.warning(f"CVE check file {cvefile} could not be located")
             else:
-                print("INFO: Located CVE check output file {}".format(cvefile))
+                logging.info(f"Located CVE check output file {cvefile}")
                 global_values.cve_check_file = cvefile
 
     return
@@ -288,13 +291,13 @@ def input_number(prompt):
     print(f'{prompt} (q to quit): ', end='')
     val = input()
     while not val.isnumeric() and val.lower() != 'q':
-        print('WARNING: Please enter a number (or q)')
+        print('Please enter a number (or q)')
         print(f'{prompt}: ', end='')
         val = input()
     if val.lower() != 'q':
         return int(val)
     else:
-        print('Terminating')
+        logging.info('Terminating')
         sys.exit(2)
 
 
@@ -308,13 +311,13 @@ def input_file(prompt, accept_null, file_exists):
     while (file_exists and not os.path.isfile(val)) and val.lower() != 'q':
         if accept_null and val == '':
             break
-        print(f'WARNING: Invalid input ("{val}" is not a file)')
+        print(f'Invalid input ("{val}" is not a file)')
         print(f'{prompt} {prompt_help}: ', end='')
         val = input()
     if val.lower() != 'q' or (accept_null and val == ''):
         return val
     else:
-        print('Terminating')
+        logging.info('Terminating')
         sys.exit(2)
 
 
@@ -325,13 +328,13 @@ def input_folder(prompt):
     while not os.path.isdir(val) and val.lower() != 'q':
         if val == '':
             break
-        print(f'WARNING: Invalid input ("{val}" is not a folder)')
+        print(f'Invalid input ("{val}" is not a folder)')
         print(f'{prompt} {prompt_help}: ', end='')
         val = input()
     if val.lower() != 'q':
         return val
     else:
-        print('Terminating')
+        logging.info('Terminating')
         sys.exit(2)
 
 
@@ -344,7 +347,7 @@ def input_string(prompt):
     if val.lower() != 'q':
         return val
     else:
-        print('Terminating')
+        logging.info('Terminating')
         sys.exit(2)
 
 
@@ -354,7 +357,7 @@ def input_string_default(prompt, default):
     if val.lower() == 'q':
         sys.exit(2)
     if len(val) == 0:
-        print('Terminating')
+        logging.info('Terminating')
         return default
     else:
         return val
@@ -367,7 +370,7 @@ def input_yesno(prompt):
     print(f'{prompt} (y/n/q): ', end='')
     val = input()
     while val.lower() not in accept_yes and val.lower() not in accept_other:
-        print('WARNING: Please enter y or n')
+        print('Please enter y or n')
         print(f'{prompt}: ', end='')
         val = input()
     if val.lower() == 'q':
@@ -393,7 +396,7 @@ def input_filepattern(pattern, filedesc):
             else:
                 retval = files_list[val]
         else:
-            print(f'WARNING: Unable to find {filedesc} files ...')
+            print(f'Unable to find {filedesc} files ...')
             enterfile = True
     else:
         enterfile = True
@@ -402,7 +405,7 @@ def input_filepattern(pattern, filedesc):
         retval = input_file(f'Please enter the {filedesc} file path', False, True)
 
     if not os.path.isfile(retval):
-        print(f'ERROR: Unable to locate {filedesc} file - exiting')
+        logging.error(f'Unable to locate {filedesc} file - exiting')
         sys.exit(2)
     return retval
 
@@ -429,7 +432,7 @@ def do_wizard():
         # {'value': 'global_values.cve_check_file', 'prompt': 'CVE check file path',
         #  'vtype': 'file_pattern', 'pattern': '**/rootfs.cve', 'filename': 'CVE check output file',
         #  'condition': 'global_values.cve_check'},
-        {'value': 'global_values.report_file', 'prompt': 'Output report file', 'vtype': 'string'},
+        # {'value': 'global_values.report_file', 'prompt': 'Output report file', 'vtype': 'string'},
     ]
 
     wiz_count = 0
@@ -456,6 +459,7 @@ def do_wizard():
                 val = input_filepattern("**/license.manifest", "'license.manifest'")
             wiz_count += 1
             globals()[wiz_entry['value']] = val
+            logging.debug(f"{wiz_entry['value']}={val}")
 
     if wiz_count == 0:
         print("- Nothing for Wizard to do - continuing ...\n")

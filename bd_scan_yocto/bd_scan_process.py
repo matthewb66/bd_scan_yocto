@@ -2,12 +2,18 @@ import requests
 import os
 # import subprocess
 import sys
+import logging
 
 from pathlib import Path
 
 from bd_scan_yocto import global_values
 # from bd_scan_yocto import utils
 # from bd_scan_yocto import config
+
+if global_values.debug:
+    logging.basicConfig(level=logging.DEBUG)
+else:
+    logging.basicConfig(level=logging.INFO)
 
 
 def get_detect():
@@ -20,7 +26,7 @@ def get_detect():
         if not os.path.isdir(tdir):
             os.mkdir(tdir)
         if not os.path.isdir(tdir):
-            print("ERROR: Cannot create synopsys-detect folder in $HOME")
+            logging.error("Cannot create synopsys-detect folder in $HOME")
             sys.exit(2)
         shpath = os.path.join(tdir, 'detect8.sh')
 
@@ -28,8 +34,8 @@ def get_detect():
         if j.ok:
             open(shpath, 'wb').write(j.content)
             if not os.path.isfile(shpath):
-                print("ERROR: Cannot download Synopsys Detect shell script "
-                      " download manually and use --detect-jar-path option")
+                logging.error("Cannot download Synopsys Detect shell script -"
+                              " download manually and use --detect-jar-path option")
                 sys.exit(2)
 
             cmd = "/bin/bash " + shpath + " "
@@ -40,6 +46,7 @@ def get_detect():
 
 
 def run_detect_sigscan(tdir, proj, ver, trust):
+    import shutil
 
     cmd = get_detect()
 
@@ -51,15 +58,22 @@ def run_detect_sigscan(tdir, proj, ver, trust):
     if trust:
         detect_cmd += "--blackduck.trust.cert=true "
     detect_cmd += "--detect.wait.for.results=true "
+    detect_cmd += "--detect.blackduck.signature.scanner.snippet.matching=SNIPPET_MATCHING "
 
-    print("\nRunning Detect on identified packages ...")
+    logging.info("\nRunning Detect on identified packages ...")
+    logging.debug(f"Detect Sigscan cmd '{detect_cmd}'")
     # output = subprocess.check_output(detect_cmd, stderr=subprocess.STDOUT)
     # mystr = output.decode("utf-8").strip()
     # lines = mystr.splitlines()
     retval = os.system(detect_cmd)
+    if not global_values.testmode:
+        shutil.rmtree(tdir)
+
     if retval != 0:
-        print("ERROR: Unable to run Detect Signature scan on package files")
+        logging.error("Unable to run Detect Signature scan on package files")
         sys.exit(2)
+
+    return
 
 
 def run_detect_for_bitbake():
@@ -77,11 +91,13 @@ def run_detect_for_bitbake():
     detect_cmd += f"--detect.bitbake.package.names={global_values.target} "
     detect_cmd += "--detect.bitbake.dependency.types.excluded=BUILD "
 
-    print("\nRUNNING DETECT ON BITBAKE PROJECT ...")
+    logging.info("\nRUNNING DETECT ON BITBAKE PROJECT ...")
+    logging.debug(f"Detect Bitbake cmd '{detect_cmd}'")
+
     # output = subprocess.check_output(detect_cmd, stderr=subprocess.STDOUT)
     # mystr = output.decode("utf-8").strip()
     # lines = mystr.splitlines()
     retval = os.system(detect_cmd)
     if retval != 0:
-        print("ERROR: Unable to run Detect Bitbake scan")
+        logging.error("Unable to run Detect Bitbake scan")
         sys.exit(2)

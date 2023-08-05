@@ -15,6 +15,8 @@ from bd_scan_yocto import global_values
 # from bd_scan_yocto import config
 from bd_scan_yocto import bd_asyncdata
 
+# logging.basicConfig(level=logging.INFO)
+
 
 def check_projver(bd, proj, ver):
 	params = {
@@ -31,10 +33,10 @@ def check_projver(bd, proj, ver):
 					return p, v
 			break
 	else:
-		print("Version '{}' does not exist in project '{}'".format(ver, proj))
+		logging.error(f"Version '{ver}' does not exist in project '{proj}'")
 		sys.exit(2)
 
-	print("Project '{}' does not exist".format(proj))
+	logging.warning(f"Project '{proj}' does not exist")
 	print('Available projects:')
 	projects = bd.get_resource('projects')
 	for proj in projects:
@@ -108,7 +110,7 @@ def process_project(bdproj, bdver):
 
 
 def process_bom(bd, bom_components):
-	logging.info("Processing {} bom entries ...".format(len(bom_components)))
+	logging.info(f"Processing {len(bom_components)} bom entries ...")
 
 	# logging.info("Downloading Async data ...")
 
@@ -118,9 +120,9 @@ def process_bom(bd, bom_components):
 	all_comp_count = len(bom_components)
 	ignored_comps = componentlist.count_ignored_comps()
 
-	print("\nPROCESSING BLACK DUCK PROJECT\nBlack Duck Server = {}".format(global_values.bd_url))
-	print(f"Component counts:\n- Total Components {all_comp_count}")
-	print(f"- Already Ignored Components {ignored_comps}")
+	logging.info(f"\nPROCESSING BLACK DUCK PROJECT\nBlack Duck Server = {global_values.bd_url}")
+	logging.info(f"Component counts:\n- Total Components {all_comp_count}")
+	logging.info(f"- Already Ignored Components {ignored_comps}")
 
 	return
 
@@ -130,7 +132,7 @@ def ignore_components(bd, ver_dict):
 	bom_compsdict = get_bom_components(bd, ver_dict)
 	# print("{}".format(str(len(bom_compsdict))))
 
-	print('\n- Getting component data ... ')
+	logging.info('\n- Getting component data ... ')
 
 	if platform.system() == "Windows":
 		asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -140,7 +142,7 @@ def ignore_components(bd, ver_dict):
 	count_ignored = 0
 	ignore_array = []
 
-	print("- Ignoring partial components ...")
+	logging.info("- Ignoring partial components ...")
 	count = 0
 	for comp in bom_compsdict.keys():
 		if pkg_ignore_dict[comp]:
@@ -174,5 +176,5 @@ def ignore_components(bd, ver_dict):
 		except requests.HTTPError as err:
 			bd.http_error_handler(err)
 
-	print(f"- Ignored {count} components")
+	logging.info(f"- Ignored {count} components")
 	return
