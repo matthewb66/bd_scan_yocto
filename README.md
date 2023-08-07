@@ -1,11 +1,11 @@
-# Synopsys Scan Yocto Script - bd_scan_yocto.py - v1.0
+# Synopsys Scan Yocto Script - bd_scan_yocto.py - BETA v1.0
 
 # PROVISION OF THIS SCRIPT
 This script is provided under the Apache v2 OSS license (see LICENSE file).
 
 It does not represent any extension of licensed functionality of Synopsys software itself and is provided as-is, without warranty or liability.
 
-If you have comments or issues, please raise a GitHub issue here. Synopsys support is not able to respond to support tickets for this OSS utility.
+If you have comments or issues, please raise a GitHub issue here. Synopsys support is not able to respond to support tickets for this OSS utility. Users of this pilot project commit to engage properly with the authors to address any identified issues.
 
 # INTRODUCTION
 ### OVERVIEW OF BD_SCAN_YOCTO
