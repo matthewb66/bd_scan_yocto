@@ -26,12 +26,13 @@ parser.add_argument("-v", "--version", help="Black Duck project version to creat
 parser.add_argument("--oe_build_env",
                     help="Yocto build environment config file (default 'oe-init-build-env')",
                     default="oe-init-build-env")
-parser.add_argument("-t", "--target", help="Yocto target (default core-image-sato)", default="core-image-sato")
+parser.add_argument("-t", "--target", help="Yocto target (default 'core-image-sato') (REQUIRED)",
+                    default="core-image-sato")
 parser.add_argument("-m", "--manifest",
                     help="Built license.manifest file)",
                     default="")
-parser.add_argument("--machine", help="Machine Architecture (for example 'qemux86-64')",
-                    default="qemux86-64")
+parser.add_argument("--machine", help="Machine Architecture (for example 'qemux86_64')",
+                    default="qemux86_64")
 parser.add_argument("--skip_detect_for_bitbake", help="Skip running Detect for Bitbake dependencies",
                     action='store_true')
 parser.add_argument("--detect_opts", help="Additional Synopsys Detect options", default="")
@@ -239,9 +240,9 @@ def get_bitbake_env():
                 if global_values.manifest_file == '' and re.search('^MANIFEST_FILE=', mline):
                     global_values.manifest = val
                     logging.info(f"Bitbake Env: manifestfile={global_values.manifest_file}")
-                # elif global_values.deploy_dir == '' and re.search('^DEPLOY_DIR=', mline):
-                #     global_values.deploy_dir = val
-                #     print("Bitbake Env: deploydir={}".format(global_values.deploy_dir))
+                elif global_values.deploy_dir == '' and re.search('^DEPLOY_DIR=', mline):
+                    global_values.deploy_dir = val
+                    logging.info(f"Bitbake Env: deploydir={global_values.deploy_dir}")
                 elif global_values.machine == '' and re.search('^MACHINE_ARCH=', mline):
                     global_values.machine = val
                     logging.info(f"Bitbake Env: machine={global_values.machine}")
@@ -254,30 +255,33 @@ def get_bitbake_env():
 
 
 def find_yocto_files():
+    machine = global_values.machine.replace('_', '-')
+
     if global_values.manifest_file == "":
         if global_values.target == '':
             logging.warning("Manifest file not specified and it could not be determined as Target not specified")
         else:
-            imgdir = os.path.join(global_values.deploy_dir, "licenses", global_values.machine)
+            manpath = os.path.join(global_values.deploy_dir, "licenses",
+                                   f"{global_values.target}-{machine}-*", "license.manifest")
             manifest = ""
-            for file in sorted(os.listdir(imgdir)):
-                if file == 'license.manifest':
-                    manifest = os.path.join(imgdir, file)
+            manlist = glob.glob(manpath)
+            if len(manlist) > 0:
+                manifest = manlist[-1]
 
             if not os.path.isfile(manifest):
-                logging.warning(f"Manifest file {manifest} could not be located")
+                logging.warning(f"Manifest file '{manifest}' could not be located")
             else:
-                logging.info(f"Located CVE check output file {manifest}")
-                global_values.cve_check_file = manifest
+                logging.info(f"Located license.manifest file {manifest}")
+                global_values.manifest_file = manifest
 
     if global_values.cve_check_file == "" and global_values.cve_check:
         if global_values.target == '':
             logging.warning("CVE check file not specified and it could not be determined as Target not specified")
         else:
-            imgdir = os.path.join(global_values.deploy_dir, "images", global_values.machine)
+            imgdir = os.path.join(global_values.deploy_dir, "images", machine)
             cvefile = ""
             for file in sorted(os.listdir(imgdir)):
-                if file.startswith(global_values.target + "-" + global_values.machine + "-") and \
+                if file.startswith(global_values.target + "-" + machine + "-") and \
                         file.endswith('rootfs.cve'):
                     cvefile = os.path.join(imgdir, file)
 
@@ -383,11 +387,11 @@ def input_yesno(prompt):
     return False
 
 
-def input_filepattern(pattern, filedesc):
+def input_filepattern(pattern, filedesc, path):
     retval = ''
     enterfile = False
     if input_yesno(f"Do you want to search recursively for '{filedesc}'?"):
-        files_list = glob.glob(pattern, recursive=True)
+        files_list = glob.glob(os.path.join(path, pattern), recursive=True)
         if len(files_list) > 0:
             print(f'Please select the {filedesc} file to be used: ')
             files_list = ['None of the below'] + files_list
@@ -399,16 +403,16 @@ def input_filepattern(pattern, filedesc):
             else:
                 retval = files_list[val]
         else:
-            print(f'Unable to find {filedesc} files ...')
+            print(f'Unable to find {filedesc} ...')
             enterfile = True
     else:
         enterfile = True
 
     if enterfile:
-        retval = input_file(f'Please enter the {filedesc} file path', False, True)
+        retval = input_file(f'Please enter the {filedesc} path', False, True)
 
     if not os.path.isfile(retval):
-        logging.error(f'Unable to locate {filedesc} file - exiting')
+        logging.error(f'Unable to locate {filedesc} - exiting')
         sys.exit(2)
     return retval
 
@@ -423,7 +427,8 @@ def do_wizard():
         {'value': 'global_values.bd_project', 'prompt': 'Black Duck project name', 'vtype': 'string'},
         {'value': 'global_values.bd_version', 'prompt': 'Black Duck version name', 'vtype': 'string'},
         {'value': 'global_values.manifest_file', 'prompt': 'Manifest file path', 'vtype': 'file_pattern',
-         'pattern': '**/license.manifest', 'filename': 'license.manifest file'},
+         'pattern': 'license.manifest', 'filedesc': 'license.manifest file',
+         'searchpath': 'global_values.deploy_dir'},
         {'value': 'global_values.target', 'prompt': 'Yocto target name', 'vtype': 'string',
          'condition': 'global_values.skip_detect_for_bitbake'},
         # {'value': 'global_values.deploy_dir', 'prompt': 'Yocto deploy folder', 'vtype': 'folder'},
@@ -451,7 +456,6 @@ def do_wizard():
                 val = input_string(wiz_entry['prompt'])
             elif wiz_entry['vtype'] == 'string_default':
                 val = input_string_default(wiz_entry['prompt'], wiz_entry['default'])
-                # val = input_string(wiz_help[wiz_categories.index(cat)]['prompt'])
             elif wiz_entry['vtype'] == 'yesno':
                 val = input_yesno(wiz_entry['prompt'])
             elif wiz_entry['vtype'] == 'file':
@@ -459,7 +463,7 @@ def do_wizard():
             elif wiz_entry['vtype'] == 'folder':
                 val = input_folder(wiz_entry['prompt'])
             elif wiz_entry['vtype'] == 'file_pattern':
-                val = input_filepattern("**/license.manifest", "'license.manifest'")
+                val = input_filepattern(wiz_entry['pattern'], wiz_entry['filedesc'], eval(wiz_entry['searchpath']))
             wiz_count += 1
             globals()[wiz_entry['value']] = val
             logging.debug(f"{wiz_entry['value']}={val}")

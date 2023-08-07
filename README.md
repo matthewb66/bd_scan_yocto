@@ -88,13 +88,10 @@ This script is designed to support Yocto versions 2.0 up to 4.2.
 
 ### INSTALLATION
 
-Install the utility using pip - for example:
-
-    pip3 install import_yocto_bm
-
-Alternatively, clone the repository and run directly using:
-
-    python3 import_yocto_bm/main.py
+1. Download or clone this repository
+2. Create a virtual environment (optional)
+3. Run 'python3 setup.py install' to install dependencies
+4. Run the script using 'python3 <path_to_library>/main.py OPTIONS'
 
 ### USAGE
 
@@ -108,7 +105,6 @@ The minimum data required to run the script is:
 - OE initialization script (if not `oe-init-build-env`)
 - Yocto target name (default `core-image-sato`)
 - Yocto machine name (default `qemux86-64`)
-- Full path to the `license.manifest` file for the specific build of interest
 
 Run the command `bd_scan_yocto` without arguments to invoke the wizard to guide you through the required information and options.
 

@@ -136,7 +136,7 @@ def ignore_components(bd, ver_dict):
 
 	if platform.system() == "Windows":
 		asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-	pkg_ignore_dict = asyncio.run(bd_asyncdata.async_main(bom_compsdict, bd.session.auth.bearer_token, ver_dict))
+	pkg_ignore_dict = asyncio.run(bd_asyncdata.async_main(bom_compsdict, bd.session.auth.bearer_token))
 
 	ignore_comps = []
 	count_ignored = 0

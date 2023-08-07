@@ -123,7 +123,7 @@ def proc_pkg_files():
                     logging.info(' - Located package file:' + file)
 
         # Try to find rpm files in rpm folder
-        pattern = "{}/{}/{}[-_]{}*".format(global_values.rpm_dir, global_values.machine, recipe, ver)
+        pattern = f"{os.path.join(global_values.rpm_dir, global_values.machine)}/{recipe}[-_]{ver}-*"
         # print(pattern)
         files_list = glob.glob(pattern, recursive=True)
         if len(files_list) > 0:
