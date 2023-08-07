@@ -32,3 +32,4 @@ bd = None
 # report_file = ''
 extended_scan_layers = []
 exclude_layers = []
+detect_opts = ''

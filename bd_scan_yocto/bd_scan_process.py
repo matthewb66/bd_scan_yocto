@@ -60,6 +60,9 @@ def run_detect_sigscan(tdir, proj, ver, trust):
     detect_cmd += "--detect.wait.for.results=true "
     detect_cmd += "--detect.blackduck.signature.scanner.snippet.matching=SNIPPET_MATCHING "
 
+    if global_values.detect_opts != '':
+        detect_cmd += global_values.detect_opts
+
     logging.info("\nRunning Detect on identified packages ...")
     logging.debug(f"Detect Sigscan cmd '{detect_cmd}'")
     # output = subprocess.check_output(detect_cmd, stderr=subprocess.STDOUT)
@@ -88,8 +91,11 @@ def run_detect_for_bitbake():
         detect_cmd += "--blackduck.trust.cert=true "
     detect_cmd += "--detect.wait.for.results=true "
     detect_cmd += "--detect.tools=DETECTOR "
+    detect_cmd += "--detect.project.codelocation.unmap=true "
     detect_cmd += f"--detect.bitbake.package.names={global_values.target} "
     detect_cmd += "--detect.bitbake.dependency.types.excluded=BUILD "
+    if global_values.detect_opts != '':
+        detect_cmd += global_values.detect_opts
 
     logging.info("\nRUNNING DETECT ON BITBAKE PROJECT ...")
     logging.debug(f"Detect Bitbake cmd '{detect_cmd}'")

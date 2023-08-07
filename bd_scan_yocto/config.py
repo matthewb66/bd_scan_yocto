@@ -34,17 +34,18 @@ parser.add_argument("--machine", help="Machine Architecture (for example 'qemux8
                     default="qemux86-64")
 parser.add_argument("--skip_detect_for_bitbake", help="Skip running Detect for Bitbake dependencies",
                     action='store_true')
+parser.add_argument("--detect_opts", help="Additional Synopsys Detect options", default="")
 parser.add_argument("--cve_check_only", help="Only check for patched CVEs from cve_check and update existing project "
-                                             "skipping scans",
+                                             "(skipping scans)",
                     action='store_true')
-parser.add_argument("--no_cve_check", help="Skip check for and update of patched CVEs", action='store_true')
+parser.add_argument("--no_cve_check", help="Skip checking/updating patched CVEs", action='store_true')
 parser.add_argument("--cve_check_file",
-                    help="CVE check output file (if not specified will be determined from conf files)", default="")
+                    help="CVE check output file (if not specified will be determined from environment)", default="")
 parser.add_argument("--wizard", help="Start command line wizard (Wizard will run by default if config incomplete)",
                     action='store_true')
 parser.add_argument("--nowizard", help="Do not use wizard (command line batch only)", action='store_true')
 parser.add_argument("--extended_scan_layers",
-                    help="Specify a command-delimited list of layers where packages within recipes will be expanded"
+                    help="Specify a comma-delimited list of layers where packages within recipes will be expanded "
                          "and Snippet scanned",
                     default="")
 parser.add_argument("--exclude_layers",
@@ -59,7 +60,6 @@ parser.add_argument("--rpm_dir",
                     default="")
 parser.add_argument("--testmode", help="Test mode - skip various checks", action='store_true')
 parser.add_argument("--debug", help="Debug logging mode", action='store_true')
-
 args = parser.parse_args()
 
 if args.debug:
@@ -180,6 +180,9 @@ def check_args():
 
     if args.exclude_layers != '':
         global_values.exclude_layers = args.exclude_layers.split(',')
+
+    if args.detect_opts != '':
+        global_values.detect_opts = args.detect_opts
 
     # if args.bblayers_out != "":
     #     if args.extended_scan_layers:
