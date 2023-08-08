@@ -121,13 +121,17 @@ def proc_pkg_files():
                         files_to_copy.append(file)
                     found = True
                     logging.info(' - Located package file:' + file)
+            if found:
+                continue
 
         # Try to find rpm files in rpm folder
+
         pattern = f"{os.path.join(global_values.rpm_dir, global_values.machine)}/{recipe}[-_]{ver}-*"
         # print(pattern)
         files_list = glob.glob(pattern, recursive=True)
         if len(files_list) > 0:
             files_to_copy.extend(files_list)
+            logging.info(' - Located rpm file:' + files_list[0])
             found = True
 
         if not found:
