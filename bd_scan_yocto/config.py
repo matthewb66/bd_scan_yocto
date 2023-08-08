@@ -274,7 +274,7 @@ def find_yocto_files():
                 logging.info(f"Located license.manifest file {manifest}")
                 global_values.manifest_file = manifest
 
-    if global_values.cve_check_file == "" and global_values.cve_check:
+    if global_values.cve_check_file == '':
         if global_values.target == '':
             logging.warning("CVE check file not specified and it could not be determined as Target not specified")
         else:
@@ -290,6 +290,7 @@ def find_yocto_files():
             else:
                 logging.info(f"Located CVE check output file {cvefile}")
                 global_values.cve_check_file = cvefile
+                global_values.cve_check = True
 
     return
 

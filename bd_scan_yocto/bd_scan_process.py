@@ -58,7 +58,7 @@ def run_detect_sigscan(tdir, proj, ver, trust):
     if trust:
         detect_cmd += "--blackduck.trust.cert=true "
     detect_cmd += "--detect.wait.for.results=true "
-    detect_cmd += "--detect.blackduck.signature.scanner.snippet.matching=SNIPPET_MATCHING "
+    # detect_cmd += "--detect.blackduck.signature.scanner.snippet.matching=SNIPPET_MATCHING "
     detect_cmd += "--detect.timeout=1200"
 
     if global_values.detect_opts != '':
