@@ -67,6 +67,8 @@ The automatic scan behaviour of `bd_scan_yocto` is described below:
 7. Wait for scan completion, and then post-process the project version BOM to remove identified sub-components from the unexpanded archives and rpm packages only. This step is required because Signature scanning can sometimes match a complete package, but continue to scan at lower levels to find embedded OSS components which can lead to false-positive matches, although this behaviour is useful for custom recipes (hence why expanded archives are excluded from this process)
 8. Optionally identify locally patched CVEs and apply to BD project
 
+Note that the Signature scan process can take some time (several minutes) related to the size of the project and the package files to scan.
+
 ### COMPARING BD_SCAN_YOCTO AGAINST IMPORT_YOCTO_BM
 
 An alternate script [import_yocto_bm](https://github.com/blackducksoftware/import_yocto_bm) has been available for some time to address limitations of Synopsys Detect for Yocto, however it requires the list of known OpenEmbedded recipes from the Black Duck KB to be maintained and updated regularly within the project, potentially leading to inaccurate results if the data is out of date.
