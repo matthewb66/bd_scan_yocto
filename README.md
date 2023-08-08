@@ -67,8 +67,6 @@ The automatic scan behaviour of `bd_scan_yocto` is described below:
 7. Wait for scan completion, and then post-process the project version BOM to remove identified sub-components from the unexpanded archives and rpm packages only. This step is required because Signature scanning can sometimes match a complete package, but continue to scan at lower levels to find embedded OSS components which can lead to false-positive matches, although this behaviour is useful for custom recipes (hence why expanded archives are excluded from this process)
 8. Optionally identify locally patched CVEs and apply to BD project
 
-Note that the Signature scan process can take some time (several minutes) related to the size of the project and the package files to scan.
-
 ### COMPARING BD_SCAN_YOCTO AGAINST IMPORT_YOCTO_BM
 
 An alternate script [import_yocto_bm](https://github.com/blackducksoftware/import_yocto_bm) has been available for some time to address limitations of Synopsys Detect for Yocto, however it requires the list of known OpenEmbedded recipes from the Black Duck KB to be maintained and updated regularly within the project, potentially leading to inaccurate results if the data is out of date.
@@ -124,13 +122,17 @@ Run the command `bd_scan_yocto` without arguments to invoke the wizard to guide 
 
 ### SCAN CONSIDERATIONS
 
-The Black Duck project will probably end up with duplicated components shown in the BOM from the Yocto scan and the Signature scan because they will probably have different origins. All Yocto (OpenEmbedded) components have no origin source code so cannot be matched by Signature scanning. It is therefore possible to compare origins/licenses/vulnerabilities etc. between the similar components matched for each scan type.
+The Black Duck project will probably end up with duplicated components shown in the BOM from the Yocto scan and the Signature scan because they have different origins. All Yocto (OpenEmbedded) components have no origin source code so cannot be matched by Signature scanning. It is therefore possible to compare origins/licenses/vulnerabilities etc. between the similar components matched for each scan type.
 
-Use the option `--exclude_layers layer1,layer2` to skip Signature scan on specific layers if required.
+Use the option `--exclude_layers layer1,layer2` to skip Signature scan on specific layers if required. You could consider using this for layers where recipes are identified by the Detect Bitbake scan (e.g. the `meta` layer) to remove duplication (same component shown twice).
 
-Use the option `--extended_scan_layers layer1,layer2` to skip Signature scanning recipes in specific layers if required.
+Use the option `--extended_scan_layers layer1,layer2` to automatically extract the package archives used by recipes within the sepcified layers before Signature scanning if required. Extracted package archives will also be Snippet scanned by default, and you could configure additional Signature scan options for these packages if desired.
 
 Note that the first Synopsys Detect scan for Yocto has the option `--detect.project.codelocation.unmap=true` configured to remove previously mapped scans.
+
+Note also that the script identifies sub-components within packages, and unless `--extended_scan_layers` is specified, these are ignored in the project. By default, components ignored in 1 project version will also be ignored in the other versions in the same project. It is theoretically possible that a component may be ignored in a project version as it is a sub-component, but should not be ignored in another version because it is used in a custom recipe for example. In this case, disable `Component Adjustments` under the Project-->Settings page to stop propagating changes across versions.
+
+Note that the Signature scan process can take some time (several minutes) related to the size of the project and the package files to scan.
 
 Black Duck Signature scanning should not be used for an entire Yocto project because it contains a large number of project and configuration files, including the development packages needed to build the image. Furthermore, OSS package code can be modified locally by change/diff files meaning Signature scans of entire Yocto projects will consume large volumes of server resources and produce a Bill of Materials with a lot of additional components which are not deployed in the Yocto image.
 
@@ -183,14 +185,16 @@ The `bd_scan_yocto` parameters for command line usage are shown below:
                            downloaded (usually poky/build/downloads)
      --rpm_dir RPM_DIR     Download directory where rpm packages are downloaded
                            (usually poky/build/tmp/deploy/rpm/<ARCH>)
-     --debug               DEBUG mode - skip various checks
+     --debug               DEBUG mode - add debug messages to the console log
 
 
-The script will use the invocation folder as the Yocto project folder (e.g. yocto_zeus/poky) by default.
+The script needs to be executed in the Yocto project folder (e.g. `yocto_zeus/poky`) where the OE initialisation script is located (`oe-init-build-env` by default).
 
 The `--project` and `--version` options are required to define the Black Duck project and version names.
 
-The Yocto target and machine values are required to locate the manifest and cve\_check log files and will be extracted from the Bitbake environment automatically, but the `--target` and `--machine` options can be used to specify these manually.
+The Yocto target should be specified using for example `--target core-image-sato`, although the default value (core-image-sato) will be used if not specified.
+
+The machine (architecture) will be extracted from the Bitbake environment automatically, but the `--machine` option can be used to specify manually.
 
 The most recent Bitbake output manifest file (located in the `build/tmp/deploy/licenses/<image>-<target>-<datetime>/license.manifest` file) will be located automatically. Use the `--manifest` option to specify the manifest file manually.
 
@@ -198,7 +202,7 @@ The most recent cve\_check log file `build/tmp/deploy/images/<arch>/<image>-<tar
 
 Use the `--cve_check_only` option to skip the scanning and creation of a project, only looking for a CVE check output log file to identify and patch matched CVEs within an existing Black Duck project (which must have been created previously).
 
-Use the `--no_cve_check` option to skip the patched CVE identification and update of CVE status in the Black Duck project. 
+Use the `--no_cve_check` option to skip the patched CVE identification and update of CVE status in the Black Duck project if the cve_check output file exists.
 
 ### BLACK DUCK CONFIGURATION
 
