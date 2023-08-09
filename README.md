@@ -47,7 +47,7 @@ It should be considered in the following scenarios:
 
 The script operates on a built Yocto project, by identifying the build (license) manifest containing __only the recipes which are within the built image__ as opposed to the superset of all recipes used to build the distribution (including build tools etc.).
 
-The script also Signature scans the downloaded origin packages (before they are modified by local patching) to identify modified or custom recipes, with the option to expand archived sources and perform Snippet scans and local copyright/license searches for recipes in specified layers.
+The script also Signature scans the downloaded origin packages (before they are modified by local patching) to identify modified or custom recipes, with the option to expand archived sources and optionally perform Snippet scans and local copyright/license searches for recipes in specified layers.
 
 This script also optionally supports extracting a list of locally patched CVEs from Bitbake via the `cve_check` class and marking them as patched in the Black Duck project.
 
@@ -63,7 +63,7 @@ The automatic scan behaviour of `bd_scan_yocto` is described below:
 3. Run Synopsys Detect in Bitbake dependency scan mode to extract the standard OE recipes/dependencies (skipped if `--skip_detect_for_bitbake` option is used) to create the specified Black Duck project & version
 4. Locate the software components and rpm packages downloaded during the build, and copy those matching the recipes from license.manifest to a temporary folder (if the option `--exclude_layers layer1,layer2` is applied then skip recipes within the specified layers)
 5. If the option `--extended_scan_layers layer1,layer2` is specified with a list of layers, then expand (decompress) the archives for the recipes in the listed layers. These expanded archives will also be snippet scanned in 6 below.
-6. Run a Signature and Snippet scan using Synopsys Detect on the copied/expanded and rpm packages and append to the specified Black Duck project, adding any other Detect scan options (for example, local copyright and license scanning with the option `--detect_opts '--detect.blackduck.signature.scanner.license.search=true --detect.blackduck.signature.scanner.copyright.search=true'`)
+6. Run a Signature scan using Synopsys Detect on the copied/expanded and rpm packages and append to the specified Black Duck project. If `--snippet` is specified then add snippet scanning, adding other Detect scan options with the `--detect_opts` option (for example, local copyright and license scanning with the option `--detect_opts '--detect.blackduck.signature.scanner.license.search=true --detect.blackduck.signature.scanner.copyright.search=true'`)
 7. Wait for scan completion, and then post-process the project version BOM to remove identified sub-components from the unexpanded archives and rpm packages only. This step is required because Signature scanning can sometimes match a complete package, but continue to scan at lower levels to find embedded OSS components which can lead to false-positive matches, although this behaviour is useful for custom recipes (hence why expanded archives are excluded from this process)
 8. Optionally identify locally patched CVEs and apply to BD project
 
@@ -73,7 +73,7 @@ An alternate script [import_yocto_bm](https://github.com/blackducksoftware/impor
 
 Furthermore, `import_yocto_bm` does not support scanning non-OpenEmbedded recipes or custom recipes, providing only a partial Bill of Materials.
 
-Components matched from `import_yocto_bm` have no copyright or deep license data, and snippet, local license/copyright scanning is not supported (as there is no package source to scan).
+Components matched from `import_yocto_bm` have no copyright or deep license data, and snippet or local license/copyright scanning is not supported (as there is no package source to scan).
 
 # RUNNING BD_SCAN_YOCTO 
 ### SUPPORTED YOCTO PROJECTS
@@ -128,6 +128,8 @@ Use the option `--exclude_layers layer1,layer2` to skip Signature scan on specif
 
 Use the option `--extended_scan_layers layer1,layer2` to automatically extract the package archives used by recipes within the sepcified layers before Signature scanning if required. Extracted package archives will also be Snippet scanned by default, and you could configure additional Signature scan options for these packages if desired.
 
+Add the option `--snippets` to run snippet scans on the downloaded packages, but note that this will slow the scan process considerably so should be used with caution.
+
 Note that the first Synopsys Detect scan for Yocto has the option `--detect.project.codelocation.unmap=true` configured to remove previously mapped scans.
 
 Note also that the script identifies sub-components within packages, and unless `--extended_scan_layers` is specified, these are ignored in the project. By default, components ignored in 1 project version will also be ignored in the other versions in the same project. It is theoretically possible that a component may be ignored in a project version as it is a sub-component, but should not be ignored in another version because it is used in a custom recipe for example. In this case, disable `Component Adjustments` under the Project-->Settings page to stop propagating changes across versions.
@@ -177,6 +179,7 @@ The `bd_scan_yocto` parameters for command line usage are shown below:
                            Specify a comma-delimited list of layers where
                            packages within recipes will be expanded and Snippet
                            scanned
+     --snippets            Run snippet scanning on downloaded package files
      --exclude_layers EXCLUDE_LAYERS
                            Specify a command-delimited list of layers where
                            packages within recipes will not be Signature scanned

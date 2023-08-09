@@ -49,6 +49,8 @@ parser.add_argument("--extended_scan_layers",
                     help="Specify a comma-delimited list of layers where packages within recipes will be expanded "
                          "and Snippet scanned",
                     default="")
+parser.add_argument("--snippets", help="Run snippet scan for downloaded package files",
+                    action='store_true')
 parser.add_argument("--exclude_layers",
                     help="Specify a command-delimited list of layers where packages within recipes will not be "
                          "Signature scanned", default="")
@@ -184,6 +186,9 @@ def check_args():
 
     if args.detect_opts != '':
         global_values.detect_opts = args.detect_opts
+
+    if args.snippets:
+        global_values.snippets = True
 
     # if args.bblayers_out != "":
     #     if args.extended_scan_layers:
