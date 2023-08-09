@@ -62,7 +62,7 @@ The automatic scan behaviour of `bd_scan_yocto` is described below:
 2. Extract information from the Bitbake environment (by running `bitbake -e`)
 3. Run Synopsys Detect in Bitbake dependency scan mode to extract the standard OE recipes/dependencies (skipped if `--skip_detect_for_bitbake` option is used) to create the specified Black Duck project & version
 4. Locate the software components and rpm packages downloaded during the build, and copy those matching the recipes from license.manifest to a temporary folder (if the option `--exclude_layers layer1,layer2` is applied then skip recipes within the specified layers)
-5. If the option `--extended_scan_layers layer1,layer2` is specified with a list of layers, then expand (decompress) the archives for the recipes in the listed layers. These expanded archives will also be snippet scanned in 6 below.
+5. If the option `--extended_scan_layers layer1,layer2` is specified with a list of layers, then expand (decompress) the archives for the recipes in the listed layers. 
 6. Run a Signature scan using Synopsys Detect on the copied/expanded and rpm packages and append to the specified Black Duck project. If `--snippet` is specified then add snippet scanning, adding other Detect scan options with the `--detect_opts` option (for example, local copyright and license scanning with the option `--detect_opts '--detect.blackduck.signature.scanner.license.search=true --detect.blackduck.signature.scanner.copyright.search=true'`)
 7. Wait for scan completion, and then post-process the project version BOM to remove identified sub-components from the unexpanded archives and rpm packages only. This step is required because Signature scanning can sometimes match a complete package, but continue to scan at lower levels to find embedded OSS components which can lead to false-positive matches, although this behaviour is useful for custom recipes (hence why expanded archives are excluded from this process)
 8. Optionally identify locally patched CVEs and apply to BD project
@@ -126,7 +126,7 @@ The Black Duck project will probably end up with duplicated components shown in 
 
 Use the option `--exclude_layers layer1,layer2` to skip Signature scan on specific layers if required. You could consider using this for layers where recipes are identified by the Detect Bitbake scan (e.g. the `meta` layer) to remove duplication (same component shown twice).
 
-Use the option `--extended_scan_layers layer1,layer2` to automatically extract the package archives used by recipes within the sepcified layers before Signature scanning if required. Extracted package archives will also be Snippet scanned by default, and you could configure additional Signature scan options for these packages if desired.
+Use the option `--extended_scan_layers layer1,layer2` to automatically extract the package archives used by recipes within the sepcified layers before Signature scanning if required. Extracted package archives can also be Snippet scanned (see below), and you could configure additional Signature scan options for these expanded packages if desired.
 
 Add the option `--snippets` to run snippet scans on the downloaded packages, but note that this will slow the scan process considerably so should be used with caution.
 
