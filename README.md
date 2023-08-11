@@ -20,7 +20,7 @@ This script combines Synopsys Detect default Yocto project scanning with Black D
 
 ### SCANNING YOCTO IN BLACK DUCK USING SYNOPSYS DETECT
 
-As described above, the standard, supported method of scanning a Yocto project is provided by Synopsys Detect (see [Synopsys Detect - scanning Yocto](https://sig-product-docs.synopsys.com/bundle/integrations-detect/page/packagemgrs/bitbake.html)).
+As described above, the standard, supported method of scanning a Yocto project into Black Duck is provided by Synopsys Detect (see [Synopsys Detect - scanning Yocto](https://sig-product-docs.synopsys.com/bundle/integrations-detect/page/packagemgrs/bitbake.html)).
 
 To perform a standard Yocto scan using Synopsys Detect:
 - Change to the poky folder of a Yocto project
@@ -51,21 +51,20 @@ The script also Signature scans the downloaded origin packages (before they are 
 
 This script also optionally supports extracting a list of locally patched CVEs from Bitbake via the `cve_check` class and marking them as patched in the Black Duck project.
 
-The script must be executed on a Linux workstation where Yocto has been installed and after a successful Bitbake build.
-
-The script requires access to a Black Duck server via the API (see Prerequisites below).
+The script must be executed on a Linux workstation where Yocto has been installed and after a successful Bitbake build and requires access to a Black Duck server via the API (see Prerequisites below).
 
 ### BD_SCAN_YOCTO SCAN BEHAVIOUR
 
 The automatic scan behaviour of `bd_scan_yocto` is described below:
-1. Locate the OE initialization script (default `oe-init-build-env`)
-2. Extract information from the Bitbake environment (by running `bitbake -e`)
-3. Run Synopsys Detect in Bitbake dependency scan mode to extract the standard OE recipes/dependencies (skipped if `--skip_detect_for_bitbake` option is used) to create the specified Black Duck project & version
-4. Locate the software components and rpm packages downloaded during the build, and copy those matching the recipes from license.manifest to a temporary folder (if the option `--exclude_layers layer1,layer2` is applied then skip recipes within the specified layers)
-5. If the option `--extended_scan_layers layer1,layer2` is specified with a list of layers, then expand (decompress) the archives for the recipes in the listed layers. 
-6. Run a Signature scan using Synopsys Detect on the copied/expanded and rpm packages and append to the specified Black Duck project. If `--snippet` is specified then add snippet scanning, adding other Detect scan options with the `--detect_opts` option (for example, local copyright and license scanning with the option `--detect_opts '--detect.blackduck.signature.scanner.license.search=true --detect.blackduck.signature.scanner.copyright.search=true'`)
-7. Wait for scan completion, and then post-process the project version BOM to remove identified sub-components from the unexpanded archives and rpm packages only. This step is required because Signature scanning can sometimes match a complete package, but continue to scan at lower levels to find embedded OSS components which can lead to false-positive matches, although this behaviour is useful for custom recipes (hence why expanded archives are excluded from this process)
-8. Optionally identify locally patched CVEs and apply to BD project
+1. Use a wizard to collect required options not specified on the command line or in environment variables
+2. Locate the OE initialization script in the invocation folder (default `oe-init-build-env`)
+3. Extract information from the Bitbake environment (by running `bitbake -e` and optionally `bitbake-layers show-recipes` if layer specific options are specified)
+4. Run Synopsys Detect in Bitbake dependency scan mode to extract the standard OE recipes/dependencies (skipped if `--skip_detect_for_bitbake` option is used) to create the specified Black Duck project & version
+5. Locate the software components and rpm packages downloaded during the build, and copy those matching the recipes from license.manifest to a temporary folder (if the option `--exclude_layers layer1,layer2` is applied then skip recipes within the specified layers)
+6. If the option `--extended_scan_layers layer1,layer2` is specified with a list of layers, then expand (decompress) the archives for the recipes in the listed layers. 
+7. Run a Signature scan using Synopsys Detect on the copied/expanded and rpm packages and append to the specified Black Duck project. If `--snippet` is specified then add snippet scanning, adding other Detect scan options with the `--detect_opts` option (for example, local copyright and license scanning with the option `--detect_opts '--detect.blackduck.signature.scanner.license.search=true --detect.blackduck.signature.scanner.copyright.search=true'`)
+8. Wait for scan completion, and then post-process the project version BOM to remove identified sub-components from the unexpanded archives and rpm packages only. This step is required because Signature scanning can sometimes match a complete package, but continue to scan at lower levels to find embedded OSS components which can lead to false-positive matches, although this behaviour is useful for custom recipes (hence why expanded archives are excluded from this process)
+9. Optionally identify locally patched CVEs and apply to BD project
 
 ### COMPARING BD_SCAN_YOCTO AGAINST IMPORT_YOCTO_BM
 
