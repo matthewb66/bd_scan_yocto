@@ -93,8 +93,8 @@ def proc_layers_in_recipes():
 
 
 def proc_pkg_files():
-    if global_values.download_dir == '' or global_values.rpm_dir == '':
-        logging.error('Download dir or RPM package dir empty - cannot continue\n')
+    if global_values.download_dir == '':
+        logging.error('Download dir empty - cannot continue\n')
         sys.exit(3)
     files_to_copy = []
     files_to_expand = []
@@ -124,15 +124,16 @@ def proc_pkg_files():
             if found:
                 continue
 
-        # Try to find rpm files in rpm folder
-
-        pattern = f"{os.path.join(global_values.rpm_dir, global_values.machine)}/{recipe}[-_]{ver}-*"
-        # print(pattern)
-        files_list = glob.glob(pattern, recursive=True)
-        if len(files_list) > 0:
-            files_to_copy.extend(files_list)
-            logging.info(' - Located rpm file:' + files_list[0])
-            found = True
+        # Try to find pkg files in pkg folder
+        if global_values.pkg_dir != '':
+            pattern = f"{os.path.join(global_values.pkg_dir, global_values.machine)}/" \
+                      f"{recipe}[-_]{ver}-*.{global_values.image_pkgtype}"
+            # print(pattern)
+            files_list = glob.glob(pattern, recursive=True)
+            if len(files_list) > 0:
+                files_to_copy.extend(files_list)
+                logging.info(' - Located pkg file:' + files_list[0])
+                found = True
 
         if not found:
             logging.info(" - No package file found")

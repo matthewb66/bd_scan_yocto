@@ -1,4 +1,4 @@
-script_version = '1.0.1'
+script_version = '1.0.2'
 bdio = []
 bdio_comps_layers = []
 bdio_comps_recipes = []
@@ -18,7 +18,8 @@ bd_version = ''
 oe_build_env = ''
 deploy_dir = ''
 download_dir = ''
-rpm_dir = ''
+pkg_dir = ''
+image_pkgtype = ''
 manifest_file = ''
 machine = ''
 cve_check = False

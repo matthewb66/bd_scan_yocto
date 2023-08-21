@@ -236,8 +236,12 @@ def get_bitbake_env():
         # mystr = output.decode("utf-8").strip()
         lines = ret.decode("utf-8").split('\n')
 
+        rpm_dir = ''
+        ipk_dir = ''
         for mline in lines:
-            if re.search("^(MANIFEST_FILE|DEPLOY_DIR|MACHINE_ARCH|DL_DIR|DEPLOY_DIR_RPM)=", mline):
+            if re.search(
+                    "^(MANIFEST_FILE|DEPLOY_DIR|MACHINE_ARCH|DL_DIR|DEPLOY_DIR_RPM|DEPLOY_DIR_IPK|IMAGE_PKGTYPE)=",
+                    mline):
 
                 # if re.search('^TMPDIR=', mline):
                 #     tmpdir = mline.split('=')[1]
@@ -254,9 +258,20 @@ def get_bitbake_env():
                 elif global_values.download_dir == '' and re.search('^DL_DIR=', mline):
                     global_values.download_dir = val
                     logging.info(f"Bitbake Env: download_dir={global_values.download_dir}")
-                elif global_values.rpm_dir == '' and re.search('^DEPLOY_DIR_RPM=', mline):
-                    global_values.rpm_dir = val
-                    logging.info(f"Bitbake Env: pm_dir={global_values.rpm_dir}")
+                elif rpm_dir == '' and re.search('^DEPLOY_DIR_RPM=', mline):
+                    rpm_dir = val
+                    logging.info(f"Bitbake Env: rpm_dir={rpm_dir}")
+                elif ipk_dir == '' and re.search('^DEPLOY_DIR_IPK=', mline):
+                    ipk_dir = val
+                    logging.info(f"Bitbake Env: ipk_dir={ipk_dir}")
+                elif re.search('^IMAGE_PKGTYPE=', mline):
+                    global_values.image_pkgtype = val
+                    logging.info(f"Bitbake Env: image_pkgtype={global_values.image_pkgtype}")
+
+        if global_values.image_pkgtype == 'rpm' and rpm_dir != '':
+            global_values.pkg_dir = rpm_dir
+        elif global_values.image_pkgtype == 'ipk' and ipk_dir != '':
+            global_values.pkg_dir = ipk_dir
 
 
 def find_yocto_files():

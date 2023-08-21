@@ -1,4 +1,4 @@
-# Synopsys Scan Yocto Script - bd_scan_yocto.py - BETA v1.0
+# Synopsys Scan Yocto Script - bd_scan_yocto.py - BETA v1.0.2
 
 # PROVISION OF THIS SCRIPT
 This script is provided under the Apache v2 OSS license (see LICENSE file).
@@ -125,7 +125,7 @@ The Black Duck project will probably end up with duplicated components shown in 
 
 Use the option `--exclude_layers layer1,layer2` to skip Signature scan on specific layers if required. You could consider using this for layers where recipes are identified by the Detect Bitbake scan (e.g. the `meta` layer) to remove duplication (same component shown twice).
 
-Use the option `--extended_scan_layers layer1,layer2` to automatically extract the package archives used by recipes within the sepcified layers before Signature scanning if required. Extracted package archives can also be Snippet scanned (see below), and you could configure additional Signature scan options for these expanded packages if desired.
+Use the option `--extended_scan_layers layer1,layer2` to automatically extract the package archives used by recipes within the specified layers before Signature scanning if required. Extracted package archives can also be Snippet scanned (see below), and you could configure additional Signature scan options for these expanded packages if desired.
 
 Add the option `--snippets` to run snippet scans on the downloaded packages, but note that this will slow the scan process considerably so should be used with caution.
 
@@ -292,3 +292,9 @@ The identification of the Linux Kernel version from the Bitbake recipes and asso
 
 ## V1.0
 - Initial version
+
+## V1.0.1
+- Modified scan options & config
+
+## V1.0.2
+- Added ipk package file support
