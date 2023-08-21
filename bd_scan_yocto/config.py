@@ -454,7 +454,7 @@ def do_wizard():
          'condition': 'global_values.skip_detect_for_bitbake'},
         # {'value': 'global_values.deploy_dir', 'prompt': 'Yocto deploy folder', 'vtype': 'folder'},
         {'value': 'global_values.download_dir', 'prompt': 'Yocto package download folder', 'vtype': 'folder'},
-        {'value': 'global_values.rpm_dir', 'prompt': 'Yocto rpm package download folder', 'vtype': 'folder'},
+        {'value': 'global_values.pkg_dir', 'prompt': 'Yocto package download folder', 'vtype': 'folder'},
         # {'value': 'global_values.cve_check',
         #  'prompt': 'Do you want to run a CVE check to patch CVEs in the BD project which have been patched locally?',
         #  'vtype': 'yesno'},
