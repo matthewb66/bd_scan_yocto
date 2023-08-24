@@ -89,6 +89,7 @@ def run_detect_for_bitbake():
                   f"--detect.project.version.name={global_values.bd_version} "
     detect_cmd += f"--blackduck.url={global_values.bd_url} "
     detect_cmd += f"--blackduck.api.token={global_values.bd_api} "
+    detect_cmd += f"--detect.bitbake.build.env.name={global_values.oe_build_env} "
     if global_values.bd_trustcert:
         detect_cmd += "--blackduck.trust.cert=true "
     detect_cmd += "--detect.wait.for.results=true "

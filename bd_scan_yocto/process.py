@@ -102,7 +102,6 @@ def proc_pkg_files():
     for recipe in global_values.recipes_dict.keys():
         found = False
         ver = global_values.recipes_dict[recipe]
-        logging.info(f"- Recipe package {recipe}/{ver}")
 
         # Try to find package files in download folder
         pattern = "{}/{}[-_]{}*".format(global_values.download_dir, recipe, ver)
@@ -120,7 +119,7 @@ def proc_pkg_files():
                     else:
                         files_to_copy.append(file)
                     found = True
-                    logging.info(' - Located package file:' + file)
+                    logging.info(f"- Recipe package {recipe}/{ver} - Located package file: {file}")
             if found:
                 continue
 
@@ -132,11 +131,11 @@ def proc_pkg_files():
             files_list = glob.glob(pattern, recursive=True)
             if len(files_list) > 0:
                 files_to_copy.extend(files_list)
-                logging.info(' - Located pkg file:' + files_list[0])
+                logging.info(f"- Recipe:{recipe}/{ver} - Located package file: {files_list[0]}")
                 found = True
 
         if not found:
-            logging.info(" - No package file found")
+            logging.info(f"- Recipe:{recipe}/{ver} - No package file found")
 
     # print(files_to_copy)
     return files_to_copy, files_to_expand
