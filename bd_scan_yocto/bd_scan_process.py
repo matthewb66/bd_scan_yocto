@@ -65,7 +65,7 @@ def run_detect_sigscan(tdir, proj, ver, trust):
     if global_values.detect_opts != '':
         detect_cmd += global_values.detect_opts
 
-    logging.info("\nRunning Detect on identified packages ...")
+    # logging.info("\nRunning Detect on identified packages ...")
     logging.debug(f"Detect Sigscan cmd '{detect_cmd}'")
     # output = subprocess.check_output(detect_cmd, stderr=subprocess.STDOUT)
     # mystr = output.decode("utf-8").strip()
@@ -100,7 +100,7 @@ def run_detect_for_bitbake():
     if global_values.detect_opts != '':
         detect_cmd += global_values.detect_opts
 
-    logging.info("\nRUNNING DETECT ON BITBAKE PROJECT ...")
+    logging.info("RUNNING DETECT ON BITBAKE PROJECT ...")
     logging.debug(f"Detect Bitbake cmd '{detect_cmd}'")
 
     # output = subprocess.check_output(detect_cmd, stderr=subprocess.STDOUT)

@@ -55,12 +55,15 @@ parser.add_argument("--exclude_layers",
                     help="Specify a command-delimited list of layers where packages within recipes will not be "
                          "Signature scanned", default="")
 parser.add_argument("--download_dir",
-                    help="Download directory where original packages are downloaded (usually poky/build/downloads)",
+                    help="Download directory where original OSS source is downloaded (usually poky/build/downloads)",
                     default="")
-parser.add_argument("--rpm_dir",
-                    help="Download directory where rpm packages are downloaded "
-                         "(usually poky/build/tmp/deploy/rpm/<ARCH>)",
+parser.add_argument("--package_dir",
+                    help="Download directory where package files are downloaded "
+                         "(for example poky/build/tmp/deploy/rpm/<ARCH>)",
                     default="")
+parser.add_argument("--image_package_type",
+                    help="Package type used for installing packages (e.g. rpm or ipx)",
+                    default="rpm")
 parser.add_argument("--testmode", help="Test mode - skip various checks", action='store_true')
 parser.add_argument("--debug", help="Debug logging mode", action='store_true')
 args = parser.parse_args()
@@ -127,15 +130,18 @@ def check_args():
 
     if args.download_dir != '':
         if not os.path.isdir(args.download_dir):
-            logging.warning(f"Specified download package folder '{args.download_dir}' does not exist")
+            logging.warning(f"Specified download sources folder '{args.download_dir}' does not exist")
         else:
             global_values.download_dir = os.path.abspath(args.download_dir)
 
-    if args.rpm_dir != '':
-        if not os.path.isdir(args.rpm_dir):
-            logging.warning(f"Specified download rpm folder '{args.rpm_dir}' does not exist")
+    if args.package_dir != '':
+        if not os.path.isdir(args.package_dir):
+            logging.warning(f"Specified download package download folder '{args.package_dir}' does not exist")
         else:
-            global_values.rpm_dir = os.path.abspath(args.rpm_dir)
+            global_values.pkg_dir = os.path.abspath(args.package_dir)
+
+    if args.image_package_type != '':
+        global_values.image_pkgtype = args.image_package_type
 
     if args.cve_check_only or args.cve_check_file != '':
         global_values.cve_check = True
@@ -294,7 +300,7 @@ def find_yocto_files():
                 logging.info(f"Located license.manifest file {manifest}")
                 global_values.manifest_file = manifest
 
-    if global_values.cve_check_file == '':
+    if global_values.cve_check_file == '' and global_values.cve_check:
         if global_values.target == '':
             logging.warning("CVE check file not specified and it could not be determined as Target not specified")
         else:
@@ -453,7 +459,7 @@ def do_wizard():
         {'value': 'global_values.target', 'prompt': 'Yocto target name', 'vtype': 'string',
          'condition': 'global_values.skip_detect_for_bitbake'},
         # {'value': 'global_values.deploy_dir', 'prompt': 'Yocto deploy folder', 'vtype': 'folder'},
-        {'value': 'global_values.download_dir', 'prompt': 'Yocto package download folder', 'vtype': 'folder'},
+        {'value': 'global_values.download_dir', 'prompt': 'Yocto OSS source download folder', 'vtype': 'folder'},
         {'value': 'global_values.pkg_dir', 'prompt': 'Yocto package download folder', 'vtype': 'folder'},
         # {'value': 'global_values.cve_check',
         #  'prompt': 'Do you want to run a CVE check to patch CVEs in the BD project which have been patched locally?',

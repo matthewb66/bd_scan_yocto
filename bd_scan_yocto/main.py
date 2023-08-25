@@ -16,9 +16,10 @@ else:
 
 
 def main():
-    logging.info(f"Yocto Black Duck Signature Scan Utility v{global_values.script_version}")
-    logging.info("---------------------------------------------------------\n")
+    logging.info(f"--------------- Yocto Black Duck Signature Scan Utility v{global_values.script_version} -----------------")
+    logging.info("--------------------------------------------------------------------------------")
 
+    logging.info('----------------------------------   PHASE 0  ----------------------------------')
     config.check_args()
 
     config.get_bitbake_env()
@@ -37,11 +38,15 @@ def main():
     global_values.bd = bd
 
     if not config.args.cve_check_only:
+        logging.info('----------------------------------   PHASE 1  ----------------------------------')
         if not global_values.skip_detect_for_bitbake:
             bd_scan_process.run_detect_for_bitbake()
+        else:
+            logging.info('Skipping Detect BITBAKE scan ...')
 
         process.proc_yocto_project(global_values.manifest_file)
 
+    logging('----------------------------------   PHASE 7  ----------------------------------')
     if global_values.cve_check_file != "" and not config.args.no_cve_check:
 
         logging.info("\nProcessing CVEs ...")
@@ -106,7 +111,9 @@ def main():
             CVEs which should be ignored)''')
         if len(patched_vulns) > 0:
             process.process_patched_cves(bd, ver, patched_vulns)
-    logging.info("Done")
+    else:
+        logging.info('Skipping CVE processing')
+    logging.info("\nDone")
 
 
 if __name__ == "__main__":

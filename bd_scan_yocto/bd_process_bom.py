@@ -120,8 +120,10 @@ def process_bom(bd, bom_components):
 	all_comp_count = len(bom_components)
 	ignored_comps = componentlist.count_ignored_comps()
 
-	logging.info(f"\nPROCESSING BLACK DUCK PROJECT\nBlack Duck Server = {global_values.bd_url}")
-	logging.info(f"Component counts:\n- Total Components {all_comp_count}")
+	logging.info(f"Processing Black Duck project")
+	logging.info(f"Black Duck Server = {global_values.bd_url}")
+	logging.info(f"Component counts:")
+	logging.info(f"- Total Components {all_comp_count}")
 	logging.info(f"- Already Ignored Components {ignored_comps}")
 
 	return

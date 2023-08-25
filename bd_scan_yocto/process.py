@@ -2,7 +2,7 @@ import os
 # import uuid
 # import datetime
 import sys
-# import re
+import re
 import subprocess
 import logging
 
@@ -32,7 +32,7 @@ def proc_license_manifest(liclines):
             if key == "PACKAGE NAME":
                 global_values.packages_list.append(value)
             elif key == "PACKAGE VERSION":
-                ver = value
+                ver = value.split('+')[0]
             elif key == "RECIPE NAME":
                 entries += 1
                 if value not in global_values.recipes_dict.keys():
@@ -99,40 +99,62 @@ def proc_pkg_files():
     files_to_copy = []
     files_to_expand = []
 
+    # Get list of all download files
+    pattern = f"{global_values.download_dir}/*"
+    # print(pattern)
+    all_download_paths_list = glob.glob(pattern, recursive=True)
+    download_paths_list = []
+    download_files_list = []
+    for path in all_download_paths_list:
+        if not path.endswith(".done"):
+            download_paths_list.append(path)
+            download_files_list.append(os.path.basename(path))
+
+    # Get list of all package files
+    pattern = f"{os.path.join(global_values.pkg_dir, global_values.machine)}/*.{global_values.image_pkgtype}"
+    package_paths_list = glob.glob(pattern, recursive=True)
+    package_files_list = []
+    for path in package_paths_list:
+        package_files_list.append(os.path.basename(path))
+
     for recipe in global_values.recipes_dict.keys():
         found = False
         ver = global_values.recipes_dict[recipe]
 
-        # Try to find package files in download folder
-        pattern = "{}/{}[-_]{}*".format(global_values.download_dir, recipe, ver)
-        # print(pattern)
-        files_list = glob.glob(pattern, recursive=True)
-        if len(files_list) > 0:
-            for file in files_list:
-                if not file.endswith(".done"):
-                    if len(global_values.exclude_layers) > 0 and \
-                            global_values.recipe_layer_dict[recipe] in global_values.exclude_layers:
-                        continue
-                    if len(global_values.extended_scan_layers) > 0 and \
-                            global_values.recipe_layer_dict[recipe] in global_values.extended_scan_layers:
-                        files_to_expand.append(file)
-                    else:
-                        files_to_copy.append(file)
-                    found = True
-                    logging.info(f"- Recipe package {recipe}/{ver} - Located package file: {file}")
-            if found:
-                continue
+        # # Try to find package files in download folder
+        # pattern = f"{global_values.download_dir}/{recipe}[_-]{ver}[.-]*"
+        # # print(pattern)
+        # files_list = glob.glob(pattern, recursive=True)
 
-        # Try to find pkg files in pkg folder
-        if global_values.pkg_dir != '':
-            pattern = f"{os.path.join(global_values.pkg_dir, global_values.machine)}/" \
-                      f"{recipe}[-_]{ver}-*.{global_values.image_pkgtype}"
-            # print(pattern)
-            files_list = glob.glob(pattern, recursive=True)
-            if len(files_list) > 0:
-                files_to_copy.extend(files_list)
-                logging.info(f"- Recipe:{recipe}/{ver} - Located package file: {files_list[0]}")
+        # Skip recipes in excluded layers
+        if len(global_values.exclude_layers) > 0 and \
+                global_values.recipe_layer_dict[recipe] in global_values.exclude_layers:
+            continue
+
+        for path, file in zip(download_paths_list, download_files_list):
+            # Check for recipe and version
+            download_res = re.search(f"^{recipe}[_-]v*{ver}[.-].*$", file)
+            if download_res is not None:
+                if len(global_values.extended_scan_layers) > 0 and \
+                        global_values.recipe_layer_dict[recipe] in global_values.extended_scan_layers:
+                    files_to_expand.append(path)
+                else:
+                    files_to_copy.append(path)
                 found = True
+                logging.info(f"- Recipe package {recipe}/{ver} - Located package file: {path}")
+        if found:
+            continue
+
+        for path, file in zip(package_paths_list, package_files_list):
+            if global_values.pkg_dir != '':
+                # pattern = f"{os.path.join(global_values.pkg_dir, global_values.machine)}/" \
+                #           f"{recipe}[-_]{ver}-*.{global_values.image_pkgtype}"
+                pkg_res = re.search(f"^(lib)*{recipe}\d*[_-]v*{ver}[+.-].*\.{global_values.image_pkgtype}", file)
+
+                if pkg_res is not None:
+                    files_to_copy.append(path)
+                    logging.info(f"- Recipe:{recipe}/{ver} - Located package file: {path}")
+                    found = True
 
         if not found:
             logging.info(f"- Recipe:{recipe}/{ver} - No package file found")
@@ -150,7 +172,8 @@ def copy_pkg_files(pkgs, tmpdir):
         shutil.copy(pkg, tmpdir)
         count += 1
 
-    logging.info(f"\nCOPYING PACKAGE FILES\n- Copied {count} package files ...")
+    logging.info(f"Copying recipe package files")
+    logging.info(f"- Copied {count} package files ...")
     return count
 
 
@@ -176,6 +199,7 @@ def expand_pkg_files(pkgs, tmpdir):
 
 def proc_yocto_project(manfile):
     import tempfile
+    logging.info('----------------------------------   PHASE 2  ----------------------------------')
     try:
         i = open(manfile, "r")
     except Exception as e:
@@ -189,13 +213,16 @@ def proc_yocto_project(manfile):
         logging.error(f'Unable to read license.manifest file {manfile} \n' + str(e))
         sys.exit(3)
 
-    logging.info("\nPROCESSING BITBAKE PROJECT:")
+    logging.info("Processing Bitbake project:")
     if not proc_license_manifest(liclines):
         sys.exit(3)
 
+    logging.info('----------------------------------   PHASE 3  ----------------------------------')
     if len(global_values.extended_scan_layers) > 0 or len(global_values.exclude_layers) > 0:
         logging.debug("Processing layers due to extended_scan_layers or excluded_layers specified ")
         proc_layers_in_recipes()
+    else:
+        logging.info('Skipping layer processing ...')
 
     # proc_recipe_revisions()
     # if not config.args.no_kb_check:
@@ -203,7 +230,8 @@ def proc_yocto_project(manfile):
     # proc_layers()
     # proc_recipes()
 
-    logging.info("\nPROCESSING PACKAGE FILES ...")
+    logging.info('----------------------------------   PHASE 4  ----------------------------------')
+    logging.info("Processing recipe & package files ...")
     pkg_copy_list, pkg_expand_list = proc_pkg_files()
     temppkgdir = tempfile.mkdtemp(prefix="bd_sig_pkgs")
 
@@ -213,11 +241,13 @@ def proc_yocto_project(manfile):
     if len(pkg_expand_list) > 0:
         processed_files += expand_pkg_files(pkg_expand_list, temppkgdir)
 
-    logging.info("\nRUNNING SYNOPSYS DETECT ON PACKAGE FILES ...\n")
+    logging.info('----------------------------------   PHASE 5  ----------------------------------')
+    logging.info("Running Synopsys Detect on recipes ...")
 
     bd_scan_process.run_detect_sigscan(temppkgdir, config.args.project, config.args.version,
                                        config.args.blackduck_trust_cert)
 
+    logging.info('----------------------------------   PHASE 6  ----------------------------------')
     bd_process_bom.process_project(config.args.project, config.args.version)
 
 
