@@ -16,7 +16,9 @@ else:
 
 
 def main():
-    logging.info(f"--------------- Yocto Black Duck Signature Scan Utility v{global_values.script_version} -----------------")
+    logging.info("--------------------------------------------------------------------------------")
+    logging.info(
+        f"--------------- Yocto Black Duck Signature Scan Utility v{global_values.script_version} -----------------")
     logging.info("--------------------------------------------------------------------------------")
 
     logging.info('----------------------------------   PHASE 0  ----------------------------------')
@@ -46,7 +48,7 @@ def main():
 
         process.proc_yocto_project(global_values.manifest_file)
 
-    logging('----------------------------------   PHASE 7  ----------------------------------')
+    logging.info('----------------------------------   PHASE 7  ----------------------------------')
     if global_values.cve_check_file != "" and not config.args.no_cve_check:
 
         logging.info("\nProcessing CVEs ...")

@@ -111,7 +111,7 @@ def proc_pkg_files():
             download_files_list.append(os.path.basename(path))
 
     # Get list of all package files
-    pattern = f"{os.path.join(global_values.pkg_dir, global_values.machine)}/*.{global_values.image_pkgtype}"
+    pattern = f"{global_values.pkg_dir}/**/*.{global_values.image_pkgtype}"
     package_paths_list = glob.glob(pattern, recursive=True)
     package_files_list = []
     for path in package_paths_list:
@@ -131,9 +131,12 @@ def proc_pkg_files():
                 global_values.recipe_layer_dict[recipe] in global_values.exclude_layers:
             continue
 
+        download_regex = re.compile(f"^{recipe}[_-]v*{ver}[.-].*$")
+        pkg_regex = re.compile(f"^(lib)*{recipe}\d*[_-]v*{ver}[+.-].*\.{global_values.image_pkgtype}")
+
         for path, file in zip(download_paths_list, download_files_list):
             # Check for recipe and version
-            download_res = re.search(f"^{recipe}[_-]v*{ver}[.-].*$", file)
+            download_res = download_regex.match(file)
             if download_res is not None:
                 if len(global_values.extended_scan_layers) > 0 and \
                         global_values.recipe_layer_dict[recipe] in global_values.extended_scan_layers:
@@ -149,7 +152,7 @@ def proc_pkg_files():
             if global_values.pkg_dir != '':
                 # pattern = f"{os.path.join(global_values.pkg_dir, global_values.machine)}/" \
                 #           f"{recipe}[-_]{ver}-*.{global_values.image_pkgtype}"
-                pkg_res = re.search(f"^(lib)*{recipe}\d*[_-]v*{ver}[+.-].*\.{global_values.image_pkgtype}", file)
+                pkg_res = pkg_regex.match(file)
 
                 if pkg_res is not None:
                     files_to_copy.append(path)

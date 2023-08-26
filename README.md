@@ -14,7 +14,7 @@ This `bd_scan_yocto.py` script is a utility intended to scan Yocto projects in S
 
 Synopsys Detect is the default scan utility for Black Duck and includes support for Yocto projects. However, Synopsys Detect Yocto scans will only identify standard recipes obtained from Openembedded.org, and will not cover modified or custom recipes, recipes moved to new layers or where package versions or revisions have been changed. Copyright and deep license data is also not supported for Synopsys Detect Yocto scans, as well as snippet or other scanning of code within custom recipes. 
 
-This script combines Synopsys Detect default Yocto project scanning with Black Duck Signature scanning of downloaded packages to create a more complete list of original, modified OSS and OSS embedded within custom packages. It also optionally supports snippet and copyright/license scanning of recipes in specific layers, and deep license data for identified components.
+This script combines Synopsys Detect default Yocto project scanning with Black Duck Signature scanning of downloaded sources and packages to create a more complete list of original, modified OSS and OSS embedded within custom packages. It also optionally supports snippet and copyright/license scanning of recipes in specific layers, and deep license data for identified components.
 
 `Bd_scan_yocto` can also optionally identify the list of locally patched CVEs within a Yocto build which can then be marked as patched in the Black Duck project.
 
@@ -26,7 +26,7 @@ To perform a standard Yocto scan using Synopsys Detect:
 - Change to the poky folder of a Yocto project
 - Run Synopsys Detect adding the options `--detect.tools=DETECTOR --detect.bitbake.package.names=core-image-sato`  (where `core-image-sato` is the package name).
 - Synopsys Detect will look for the default OE initialization script (`oe-init-build-env`); you can use the option `--detect.bitbake.build.env=oe-init-script` if you need to specify an alternate init script (`oe-init-script` in this example).
-- Detect can optionally inspect the build manifest to remove build dependencies if the option `--detect.bitbake.dependency.types.excluded=BUILD` is used (see [here](https://community.synopsys.com/s/document-item?bundleId=integrations-detect&topicId=properties%2Fdetectors%2Fbitbake.html] ) for more information).
+- Detect can optionally inspect the build manifest to remove build dependencies if the option `--detect.bitbake.dependency.types.excluded=BUILD` is used (see [here](https://community.synopsys.com/s/document-item?bundleId=integrations-detect&topicId=properties%2Fdetectors%2Fbitbake.html]) for more information).
 
 However, Synopsys Detect can only identify unmodified, original recipes obtained from [layers.openembedded.org](http://layers.openembedded.org/), meaning that many Yocto recipes which have been modified and custom recipes will not be identified.
 
@@ -34,7 +34,7 @@ Components in the resulting BOM will also not have copyrights or deep license da
 
 ### WHY BD_SCAN_YOCTO?
 
-This `bd_scan_yocto` script provides a multi-factor scan for Yocto projects combining the default Synopsys Detect Bitbake scan with other techniques to produce a more complete Bill of Materials including modified OSS packages and OSS within custom recipes.
+This `bd_scan_yocto` script provides a multifactor scan for Yocto projects combining the default Synopsys Detect Bitbake scan with other techniques to produce a more complete Bill of Materials including modified OSS packages and OSS within custom recipes.
 
 It should be considered in the following scenarios:
 - Where many standard OpenEmbedded recipes have been moved to new layers (meaning they will not be matched by Synopsys Detect)
@@ -63,7 +63,7 @@ The automatic scan behaviour of `bd_scan_yocto` is described below:
 5. Locate the software components and rpm packages downloaded during the build, and copy those matching the recipes from license.manifest to a temporary folder (if the option `--exclude_layers layer1,layer2` is applied then skip recipes within the specified layers)
 6. If the option `--extended_scan_layers layer1,layer2` is specified with a list of layers, then expand (decompress) the archives for the recipes in the listed layers. 
 7. Run a Signature scan using Synopsys Detect on the copied/expanded and rpm packages and append to the specified Black Duck project. If `--snippet` is specified then add snippet scanning, adding other Detect scan options with the `--detect_opts` option (for example, local copyright and license scanning with the option `--detect_opts '--detect.blackduck.signature.scanner.license.search=true --detect.blackduck.signature.scanner.copyright.search=true'`)
-8. Wait for scan completion, and then post-process the project version BOM to remove identified sub-components from the unexpanded archives and rpm packages only. This step is required because Signature scanning can sometimes match a complete package, but continue to scan at lower levels to find embedded OSS components which can lead to false-positive matches, although this behaviour is useful for custom recipes (hence why expanded archives are excluded from this process)
+8. Wait for scan completion, and then post-process the project version BOM to remove identified subcomponents from the unexpanded archives and rpm packages only. This step is required because Signature scanning can sometimes match a complete package, but continue to scan at lower levels to find embedded OSS components which can lead to false-positive matches, although this behaviour is useful for custom recipes (hence why expanded archives are excluded from this process)
 9. Optionally identify locally patched CVEs and apply to BD project
 
 ### COMPARING BD_SCAN_YOCTO AGAINST IMPORT_YOCTO_BM
@@ -83,15 +83,15 @@ This script is designed to support Yocto versions 2.0 up to 4.2.
 
 1. Script must be run on Linux.
 
-1. Python 3 must be installed.
+2. Python 3 must be installed.
 
-1. A Yocto build environment is required.
+3. A Yocto build environment is required.
 
-1. The Yocto project must have been pre-built with a `license.manifest` file generated by the build and the downloaded original package archives available in the download folder (usually `poky/build/downloads`) and rpm packages in the rpm cache folder.
+4. The Yocto project must have been pre-built with a `license.manifest` file generated by the build and the downloaded original package archives available in the download folder (usually `poky/build/downloads`) and rpm packages in the rpm cache folder.
 
-1. Black Duck server credentials (URL and API token) are required.
+5. Black Duck server credentials (URL and API token) are required.
 
-1. OPTIONAL: For patched CVE remediation in the Black Duck project, you will need to add the `cve_check` bbclass to the Yocto build configuration to generate the CVE check log output. Add the following line to the `build/conf/local.conf` file:
+6. OPTIONAL: For patched CVE remediation in the Black Duck project, you will need to add the `cve_check` bbclass to the Yocto build configuration to generate the CVE check log output. Add the following line to the `build/conf/local.conf` file:
 
        INHERIT += "cve-check"
 
@@ -131,7 +131,7 @@ Add the option `--snippets` to run snippet scans on the downloaded packages, but
 
 Note that the first Synopsys Detect scan for Yocto has the option `--detect.project.codelocation.unmap=true` configured to remove previously mapped scans.
 
-Note also that the script identifies sub-components within packages, and unless `--extended_scan_layers` is specified, these are ignored in the project. By default, components ignored in 1 project version will also be ignored in the other versions in the same project. It is theoretically possible that a component may be ignored in a project version as it is a sub-component, but should not be ignored in another version because it is used in a custom recipe for example. In this case, disable `Component Adjustments` under the Project-->Settings page to stop propagating changes across versions.
+Note also that the script identifies subcomponents within packages, and unless `--extended_scan_layers` is specified, these are ignored in the project. By default, components ignored in 1 project version will also be ignored in the other versions in the same project. It is theoretically possible that a component may be ignored in a project version as it is a subcomponent, but should not be ignored in another version because it is used in a custom recipe for example. In this case, disable `Component Adjustments` under the Project-->Settings page to stop propagating changes across versions.
 
 Note that the Signature scan process can take some time (several minutes) related to the size of the project and the package files to scan.
 
@@ -183,10 +183,12 @@ The `bd_scan_yocto` parameters for command line usage are shown below:
                            Specify a command-delimited list of layers where
                            packages within recipes will not be Signature scanned
      --download_dir DOWNLOAD_DIR
-                           Download directory where original packages are
+                           Download directory where original software archives are
                            downloaded (usually poky/build/downloads)
-     --rpm_dir RPM_DIR     Download directory where rpm packages are downloaded
+     --package_dir PKG_DIR Download directory where packages are downloaded
                            (usually poky/build/tmp/deploy/rpm/<ARCH>)
+     --image_package_type rpm|ipk
+                           Type of packages installed (rpm or ipk - default 'rpm')
      --debug               DEBUG mode - add debug messages to the console log
 
 
@@ -229,34 +231,38 @@ To run the utility in wizard mode, simply use the command `import_yocto_bm` and 
 
 Use the option `--nowizard` to run in batch mode and bypass the wizard mode, noting that you will need to specify all required options on the command line correctly.
 
-Use the following command to scan a Yocto build, create Black Duck project `myproject` and version `v1.0`, then update CVE patch status for identified CVEs (will require the OE environment to have been loaded previously):
+Use the following command to scan a Yocto project (with default oe-build-env 'oe-init-build-env' and target 'core-image-sato', latest license.manifest file), create Black Duck project `myproject` and version `v1.0`, then update CVE patch status for identified CVEs if cve_patch data available:
 
     import_yocto_bm --blackduck_url https://SERVER_URL \
       --blackduck_api_token TOKEN \
       --blackduck_trust_cert \
       -p myproject -v v1.0
 
-To scan a Yocto project specifying a different build manifest as opposed to the most recent one:
+To scan a Yocto project with a custom oe-init script, specified target 'core-image-minimal' and a different license manifest as opposed to the most recent one:
 
     import_yocto_bm --blackduck_url https://SERVER_URL \
       --blackduck_api_token TOKEN \
       --blackduck_trust_cert \
       -p myproject -v v1.0 \
-      -m tmp/deploy/licenses/core-image-sato-qemux86-64-20200728105751/package.manifest
+      --oe-build-env custom-oe-init \
+      -t core-image-minimal \
+      -m tmp/deploy/licenses/core-image-sato-qemux86-64-20220728105751/package.manifest
 
-To skip the Synopsys Detect Yocto scan, Signature scan the downloaded package archives only:
+To skip the Synopsys Detect Yocto scan and Signature scan the downloaded package archives only with default target and latest license manifest file:
 
     import_yocto_bm --blackduck_url https://SERVER_URL \
       --blackduck_api_token TOKEN \
       --blackduck_trust_cert \
-      -p myproject -v v1.0 --skip_detect_for_bitbake
+      -p myproject -v v1.0 \
+      --skip_detect_for_bitbake
 
 To perform a CVE check patch analysis ONLY (to update an existing Black Duck project created previously by the script with patched vulnerabilities) use the command:
 
     import_yocto_bm --blackduck_url https://SERVER_URL \
       --blackduck_api_token TOKEN \
       --blackduck_trust_cert \
-      -p myproject -v v1.0 --cve_check_only
+      -p myproject -v v1.0 \
+      --cve_check_only
 
 ### CVE PATCHING
 
