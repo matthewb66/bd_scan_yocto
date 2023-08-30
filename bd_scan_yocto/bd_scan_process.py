@@ -51,7 +51,7 @@ def run_detect_sigscan(tdir, proj, ver, trust):
     cmd = get_detect()
 
     detect_cmd = cmd
-    detect_cmd += f"--detect.source.path={tdir} --detect.project.name={proj} " + \
+    detect_cmd += f" --detect.source.path={tdir} --detect.project.name={proj} " + \
                   f"--detect.project.version.name={ver} "
     detect_cmd += f"--blackduck.url={global_values.bd_url} "
     detect_cmd += f"--blackduck.api.token={global_values.bd_api} "
@@ -60,7 +60,7 @@ def run_detect_sigscan(tdir, proj, ver, trust):
     detect_cmd += "--detect.wait.for.results=true "
     if global_values.snippets:
         detect_cmd += "--detect.blackduck.signature.scanner.snippet.matching=SNIPPET_MATCHING "
-    detect_cmd += "--detect.timeout=1200"
+    detect_cmd += "--detect.timeout=1200 "
 
     if global_values.detect_opts != '':
         detect_cmd += global_values.detect_opts
@@ -85,7 +85,7 @@ def run_detect_for_bitbake():
     cmd = get_detect()
 
     detect_cmd = cmd
-    detect_cmd += f"--detect.project.name={global_values.bd_project} " + \
+    detect_cmd += f" --detect.project.name={global_values.bd_project} " + \
                   f"--detect.project.version.name={global_values.bd_version} "
     detect_cmd += f"--blackduck.url={global_values.bd_url} "
     detect_cmd += f"--blackduck.api.token={global_values.bd_api} "
