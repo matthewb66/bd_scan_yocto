@@ -251,7 +251,7 @@ def proc_yocto_project(manfile):
                                        config.args.blackduck_trust_cert)
 
     logging.info('----------------------------------   PHASE 6  ----------------------------------')
-    bd_process_bom.process_project(config.args.project, config.args.version)
+    bd_process_bom.process_bdproject(config.args.project, config.args.version)
 
 
 def process_patched_cves(bd, version, vuln_list):

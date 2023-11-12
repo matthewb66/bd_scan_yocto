@@ -64,6 +64,8 @@ parser.add_argument("--package_dir",
 parser.add_argument("--image_package_type",
                     help="Package type used for installing packages (e.g. rpm or ipx)",
                     default="rpm")
+parser.add_argument("--no_ignore", help="Do not ignore partial components after Signature matching",
+                    action='store_true')
 parser.add_argument("--testmode", help="Test mode - skip various checks", action='store_true')
 parser.add_argument("--debug", help="Debug logging mode", action='store_true')
 args = parser.parse_args()
@@ -195,6 +197,9 @@ def check_args():
 
     if args.snippets:
         global_values.snippets = True
+
+    if args.snippets:
+        global_values.ignore_components = False
 
     # if args.bblayers_out != "":
     #     if args.extended_scan_layers:

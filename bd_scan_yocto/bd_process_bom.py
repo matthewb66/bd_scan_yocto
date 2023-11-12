@@ -91,7 +91,7 @@ def get_all_projects(bd):
 	return projlist
 
 
-def process_project(bdproj, bdver):
+def process_bdproject(bdproj, bdver):
 	bd = Client(
 		token=global_values.bd_api,
 		base_url=global_values.bd_url,
@@ -105,12 +105,14 @@ def process_project(bdproj, bdver):
 
 	process_bom(bd, bom_components)
 
-	ignore_components(bd, ver_dict, )
+	if global_values.ignore_components:
+		ignore_components(bd, ver_dict)
 	return
 
 
 def process_bom(bd, bom_components):
-	logging.info(f"Processing {len(bom_components)} bom entries ...")
+	logging.info(f"Processing Black Duck project")
+	# logging.info(f" {len(bom_components)} bom entries ...")
 
 	# logging.info("Downloading Async data ...")
 
@@ -120,21 +122,21 @@ def process_bom(bd, bom_components):
 	all_comp_count = len(bom_components)
 	ignored_comps = componentlist.count_ignored_comps()
 
-	logging.info(f"Processing Black Duck project")
-	logging.info(f"Black Duck Server = {global_values.bd_url}")
-	logging.info(f"Component counts:")
-	logging.info(f"- Total Components {all_comp_count}")
-	logging.info(f"- Already Ignored Components {ignored_comps}")
+	# logging.info(f"Black Duck Server = {global_values.bd_url}")
+	logging.info(f"- Total Components {all_comp_count} - Already Ignored Components {ignored_comps}")
 
 	return
 
 
 def ignore_components(bd, ver_dict):
+	logging.info('----------------------------------   PHASE 6A  ----------------------------------')
+	logging.info("Ignoring partially matched compoents  ...")
+
 	# print('Getting components from project ... found ', end='')
 	bom_compsdict = get_bom_components(bd, ver_dict)
 	# print("{}".format(str(len(bom_compsdict))))
 
-	logging.info('\n- Getting component data ... ')
+	logging.info('- Getting component data ... ')
 
 	if platform.system() == "Windows":
 		asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())

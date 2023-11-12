@@ -1,4 +1,4 @@
-# Synopsys Scan Yocto Script - bd_scan_yocto.py - BETA v1.0.5
+# Synopsys Scan Yocto Script - bd_scan_yocto.py - BETA v1.0.6
 
 # PROVISION OF THIS SCRIPT
 This script is provided under the Apache v2 OSS license (see LICENSE file).
@@ -83,7 +83,7 @@ This script is designed to support Yocto versions 2.0 up to 4.2.
 
 1. Script must be run on Linux.
 
-2. Python 3 must be installed.
+2. Python 3.9 or greater must be installed.
 
 3. A Yocto build environment is required.
 
@@ -91,7 +91,9 @@ This script is designed to support Yocto versions 2.0 up to 4.2.
 
 5. Black Duck server credentials (URL and API token) are required.
 
-6. OPTIONAL: For patched CVE remediation in the Black Duck project, you will need to add the `cve_check` bbclass to the Yocto build configuration to generate the CVE check log output. Add the following line to the `build/conf/local.conf` file:
+6. Ensure that the Bitbake project is valid and commands can be run including `bitbake -g` and `bitbake-layers show-recipes`.
+
+7. OPTIONAL: For patched CVE remediation in the Black Duck project, you will need to add the `cve_check` bbclass to the Yocto build configuration to generate the CVE check log output. Add the following line to the `build/conf/local.conf` file:
 
        INHERIT += "cve-check"
 
@@ -117,7 +119,11 @@ The minimum data required to run the script is:
 - Yocto target name (default `core-image-sato`)
 - Yocto machine name (default `qemux86-64`)
 
-Run the command `bd_scan_yocto` without arguments to invoke the wizard to guide you through the required information and options.
+Use python to run the script `bd_scan_yocto/main.py` without arguments to invoke the wizard to guide you 
+through the required information and options, for example (where SCRIPT_DIR is the folder where the script has been
+installed):
+
+    python3 SCRIPT_DIR/bd_scan_yocto/main.py
 
 ### SCAN CONSIDERATIONS
 
@@ -128,6 +134,8 @@ Use the option `--exclude_layers layer1,layer2` to skip Signature scan on specif
 Use the option `--extended_scan_layers layer1,layer2` to automatically extract the package archives used by recipes within the specified layers before Signature scanning if required. Extracted package archives can also be Snippet scanned (see below), and you could configure additional Signature scan options for these expanded packages if desired.
 
 Add the option `--snippets` to run snippet scans on the downloaded packages, but note that this will slow the scan process considerably so should be used with caution.
+
+Add the option `--no_ignore` to skip ignoring partially matched components from the Signature scan. The ignore process ignores any matches not at the root folder of scanned packages.
 
 Note that the first Synopsys Detect scan for Yocto has the option `--detect.project.codelocation.unmap=true` configured to remove previously mapped scans.
 
@@ -143,7 +151,7 @@ The `bd_scan_yocto` parameters for command line usage are shown below:
      -h, --help            show this help message and exit
      --blackduck_url BLACKDUCK_URL
                            Black Duck server URL (REQUIRED)
-    --blackduck_api_token BLACKDUCK_API_TOKEN
+     --blackduck_api_token BLACKDUCK_API_TOKEN
                            Black Duck API token (REQUIRED)
      --blackduck_trust_cert
                            Black Duck trust server cert
@@ -155,11 +163,11 @@ The `bd_scan_yocto` parameters for command line usage are shown below:
                            Black Duck project version to create (REQUIRED)
      --oe_build_env OE_BUILD_ENV
                            Yocto build environment config file (default 'oe-init-
-                           build-env')
+                           build-env' - must exist in invocation folder not full PATH)
      -t TARGET, --target TARGET
                            Yocto target (default core-image-sato)
      -m MANIFEST, --manifest MANIFEST
-                           Built license.manifest file)
+                           Built license.manifest file
      --machine MACHINE     Machine Architecture (for example 'qemux86-64')
      --skip_detect_for_bitbake
                            Skip running Detect for Bitbake dependencies
@@ -189,6 +197,7 @@ The `bd_scan_yocto` parameters for command line usage are shown below:
                            (usually poky/build/tmp/deploy/rpm/<ARCH>)
      --image_package_type rpm|ipk
                            Type of packages installed (rpm or ipk - default 'rpm')
+     --no_ignore           Do not ignore partially matched components from Signature scan
      --debug               DEBUG mode - add debug messages to the console log
 
 
@@ -227,20 +236,22 @@ Where `SERVER_URL` is the Black Duck server URL and `TOKEN` is the Black Duck AP
 
 ### EXAMPLE USAGE
 
-To run the utility in wizard mode, simply use the command `import_yocto_bm` and it will ask questions to determine the scan parameters.
+To run the utility in wizard mode, simply run the script and it will ask questions to determine the scan parameters.
 
 Use the option `--nowizard` to run in batch mode and bypass the wizard mode, noting that you will need to specify all required options on the command line correctly.
 
-Use the following command to scan a Yocto project (with default oe-build-env 'oe-init-build-env' and target 'core-image-sato', latest license.manifest file), create Black Duck project `myproject` and version `v1.0`, then update CVE patch status for identified CVEs if cve_patch data available:
+Use the following command to scan a Yocto project (with default oe-build-env 'oe-init-build-env' and target 'core-image-sato', latest license.manifest file), create Black Duck project `myproject` and version `v1.0`, then update CVE patch status for identified CVEs if cve_patch data available (where SCRIPT_DIR is the location where the script has been installed):
 
-    import_yocto_bm --blackduck_url https://SERVER_URL \
+    python3 SCRIPT_DIR/bd_scan_yocto/main.py \
+      --blackduck_url https://SERVER_URL \
       --blackduck_api_token TOKEN \
       --blackduck_trust_cert \
       -p myproject -v v1.0
 
 To scan a Yocto project with a custom oe-init script, specified target 'core-image-minimal' and a different license manifest as opposed to the most recent one:
 
-    import_yocto_bm --blackduck_url https://SERVER_URL \
+    python3 SCRIPT_DIR/bd_scan_yocto/main.py \
+      --blackduck_url https://SERVER_URL \
       --blackduck_api_token TOKEN \
       --blackduck_trust_cert \
       -p myproject -v v1.0 \
@@ -250,7 +261,8 @@ To scan a Yocto project with a custom oe-init script, specified target 'core-ima
 
 To skip the Synopsys Detect Yocto scan and Signature scan the downloaded package archives only with default target and latest license manifest file:
 
-    import_yocto_bm --blackduck_url https://SERVER_URL \
+    python3 SCRIPT_DIR/bd_scan_yocto/main.py \
+      --blackduck_url https://SERVER_URL \
       --blackduck_api_token TOKEN \
       --blackduck_trust_cert \
       -p myproject -v v1.0 \
@@ -258,7 +270,8 @@ To skip the Synopsys Detect Yocto scan and Signature scan the downloaded package
 
 To perform a CVE check patch analysis ONLY (to update an existing Black Duck project created previously by the script with patched vulnerabilities) use the command:
 
-    import_yocto_bm --blackduck_url https://SERVER_URL \
+    python3 SCRIPT_DIR/bd_scan_yocto/main.py \
+      --blackduck_url https://SERVER_URL \
       --blackduck_api_token TOKEN \
       --blackduck_trust_cert \
       -p myproject -v v1.0 \
@@ -313,3 +326,6 @@ The identification of the Linux Kernel version from the Bitbake recipes and asso
 
 ## V1.0.5
 - Fixed issue with Detect Bitbake scan
+
+## V1.0.6
+- Added option to skip ignoring partial components after Signature matching

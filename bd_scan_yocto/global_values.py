@@ -1,4 +1,4 @@
-script_version = '1.0.5'
+script_version = '1.0.6'
 bdio = []
 bdio_comps_layers = []
 bdio_comps_recipes = []
@@ -35,3 +35,4 @@ extended_scan_layers = []
 exclude_layers = []
 detect_opts = ''
 snippets = False
+ignore_components = True
