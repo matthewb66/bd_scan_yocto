@@ -10,11 +10,6 @@ from bd_scan_yocto import global_values
 # from bd_scan_yocto import utils
 # from bd_scan_yocto import config
 
-if global_values.debug:
-    logging.basicConfig(level=logging.DEBUG)
-else:
-    logging.basicConfig(level=logging.INFO)
-
 
 def get_detect():
     cmd = ''
@@ -28,9 +23,9 @@ def get_detect():
         if not os.path.isdir(tdir):
             logging.error("Cannot create synopsys-detect folder in $HOME")
             sys.exit(2)
-        shpath = os.path.join(tdir, 'detect8.sh')
+        shpath = os.path.join(tdir, 'detect9.sh')
 
-        j = requests.get("https://detect.synopsys.com/detect8.sh")
+        j = requests.get("https://detect.synopsys.com/detect9.sh")
         if j.ok:
             open(shpath, 'wb').write(j.content)
             if not os.path.isfile(shpath):
@@ -77,6 +72,8 @@ def run_detect_sigscan(tdir, proj, ver, trust):
     if retval != 0:
         logging.error("Unable to run Detect Signature scan on package files")
         sys.exit(2)
+    else:
+        logging.info("Detect scan for Bitbake dependencies completed successfully")
 
     return
 
@@ -90,6 +87,7 @@ def run_detect_for_bitbake():
     detect_cmd += f"--blackduck.url={global_values.bd_url} "
     detect_cmd += f"--blackduck.api.token={global_values.bd_api} "
     detect_cmd += f"--detect.bitbake.build.env.name={global_values.oe_build_env} "
+    detect_cmd += f"--detect.source.path={global_values.oe_build_envpath} "
     if global_values.bd_trustcert:
         detect_cmd += "--blackduck.trust.cert=true "
     detect_cmd += "--detect.wait.for.results=true "
@@ -110,3 +108,5 @@ def run_detect_for_bitbake():
     if retval != 0:
         logging.error("Unable to run Detect Bitbake scan")
         sys.exit(2)
+    else:
+        logging.info("Detect scan for Bitbake dependencies completed successfully")

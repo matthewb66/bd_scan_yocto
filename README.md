@@ -1,4 +1,4 @@
-# Synopsys Scan Yocto Script - bd_scan_yocto.py - BETA v1.0.6
+# Synopsys Scan Yocto Script - bd_scan_yocto.py - BETA v1.0.7
 
 # PROVISION OF THIS SCRIPT
 This script is provided under the Apache v2 OSS license (see LICENSE file).
@@ -199,6 +199,7 @@ The `bd_scan_yocto` parameters for command line usage are shown below:
                            Type of packages installed (rpm or ipk - default 'rpm')
      --no_ignore           Do not ignore partially matched components from Signature scan
      --debug               DEBUG mode - add debug messages to the console log
+     --logfile LOGFILE     Specify LOGFILE to store logging messages (will also be sent to the console)
 
 
 The script needs to be executed in the Yocto project folder (e.g. `yocto_zeus/poky`) where the OE initialisation script is located (`oe-init-build-env` by default).
@@ -329,3 +330,6 @@ The identification of the Linux Kernel version from the Bitbake recipes and asso
 
 ## V1.0.6
 - Added option to skip ignoring partial components after Signature matching
+
+## V1.0.7
+- Added logfile option, migrated to Detect9 and fixed issue with oe_build_env being supplied as a path.

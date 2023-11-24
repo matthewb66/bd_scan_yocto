@@ -1,4 +1,4 @@
-script_version = '1.0.6'
+script_version = '1.0.7'
 bdio = []
 bdio_comps_layers = []
 bdio_comps_recipes = []
@@ -9,6 +9,7 @@ layers_list = []
 bdio_proj_rel_list = []
 # replace_recipes_dict = {}
 
+logfile = ''
 bd_trustcert = False
 bd_api = ''
 bd_url = ''
@@ -16,6 +17,7 @@ bd_project = ''
 bd_version = ''
 # offline = False
 oe_build_env = ''
+oe_build_envpath = '.'
 deploy_dir = ''
 download_dir = ''
 pkg_dir = ''

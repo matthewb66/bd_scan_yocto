@@ -14,11 +14,6 @@ from bd_scan_yocto import config
 from bd_scan_yocto import bd_scan_process
 from bd_scan_yocto import bd_process_bom
 
-if global_values.debug:
-    logging.basicConfig(level=logging.DEBUG)
-else:
-    logging.basicConfig(level=logging.INFO)
-
 
 def proc_license_manifest(liclines):
     logging.info("- Working on recipes from license.manifest: ...")

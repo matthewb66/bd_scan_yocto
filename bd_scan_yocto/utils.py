@@ -9,11 +9,6 @@ import logging
 from bd_scan_yocto import global_values
 # from bd_scan_yocto import config
 
-if global_values.debug:
-    logging.basicConfig(level=logging.DEBUG)
-else:
-    logging.basicConfig(level=logging.INFO)
-
 
 def get_projver(bd, pargs):
     params = {

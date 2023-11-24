@@ -68,12 +68,9 @@ parser.add_argument("--no_ignore", help="Do not ignore partial components after 
                     action='store_true')
 parser.add_argument("--testmode", help="Test mode - skip various checks", action='store_true')
 parser.add_argument("--debug", help="Debug logging mode", action='store_true')
-args = parser.parse_args()
+parser.add_argument("--logfile", help="Logging output file", default="")
 
-if args.debug:
-    logging.basicConfig(level=logging.DEBUG)
-else:
-    logging.basicConfig(level=logging.INFO)
+args = parser.parse_args()
 
 
 def check_args():
@@ -81,12 +78,34 @@ def check_args():
     #     print('''Please use this program on a Linux platform or extract data from a Yocto build then
     #     use the --bblayers_out option to scan on other platforms\nExiting''')
     #     sys.exit(2)
-
-    if args.oe_build_env != '':
-        global_values.oe_build_env = args.oe_build_env
-
     if args.debug:
         global_values.debug = True
+        loglevel = logging.DEBUG
+    else:
+        loglevel = logging.INFO
+
+    if args.logfile != '':
+        if os.path.exists(args.logfile):
+            logging.error(f"Specified logfile '{args.logfile}' already exists - EXITING")
+            sys.exit(2)
+        logging.basicConfig(encoding='utf-8',
+                            handlers=[logging.FileHandler(args.logfile), logging.StreamHandler(sys.stdout)],
+                            level=loglevel)
+    else:
+        logging.basicConfig(level=loglevel)
+
+    logging.info("--------------------------------------------------------------------------------")
+    logging.info(
+        f"--------------- Yocto Black Duck Signature Scan Utility v{global_values.script_version} -----------------")
+    logging.info("--------------------------------------------------------------------------------")
+
+    logging.info('----------------------------------   PHASE 0  ----------------------------------')
+
+    if args.oe_build_env != '':
+        if os.path.dirname(args.oe_build_env) != '':
+            global_values.oe_build_envpath = os.path.dirname(args.oe_build_env)
+            logging.warning("Fixing OE environment name (--oe_build_env) which was specified as a PATH")
+        global_values.oe_build_env = os.path.basename(args.oe_build_env)
 
     if args.testmode:
         global_values.testmode = True
@@ -198,7 +217,7 @@ def check_args():
     if args.snippets:
         global_values.snippets = True
 
-    if args.snippets:
+    if args.no_ignore:
         global_values.ignore_components = False
 
     # if args.bblayers_out != "":

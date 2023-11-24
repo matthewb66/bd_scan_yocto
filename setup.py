@@ -11,7 +11,7 @@ setuptools.setup(
     name="bd_scan_yocto",
     version=f"{global_values.script_version}",
     author="Matthew Brady",
-    author_email="w3matt@gmail.com",
+    author_email="mbrad@synopsys.com",
     description="Process a built Yocto project to create a Black Duck project version",
     long_description=long_description,
     long_description_content_type="text/markdown",

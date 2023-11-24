@@ -9,19 +9,9 @@ from bd_scan_yocto import process
 from bd_scan_yocto import utils
 from bd_scan_yocto import bd_scan_process
 
-if global_values.debug:
-    logging.basicConfig(level=logging.DEBUG)
-else:
-    logging.basicConfig(level=logging.INFO)
-
 
 def main():
-    logging.info("--------------------------------------------------------------------------------")
-    logging.info(
-        f"--------------- Yocto Black Duck Signature Scan Utility v{global_values.script_version} -----------------")
-    logging.info("--------------------------------------------------------------------------------")
 
-    logging.info('----------------------------------   PHASE 0  ----------------------------------')
     config.check_args()
 
     config.get_bitbake_env()

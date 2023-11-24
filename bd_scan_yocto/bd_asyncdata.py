@@ -5,11 +5,6 @@ import logging
 
 from bd_scan_yocto import global_values
 
-if global_values.debug:
-    logging.basicConfig(level=logging.DEBUG)
-else:
-    logging.basicConfig(level=logging.INFO)
-
 
 async def async_main(comps, token):
     async with aiohttp.ClientSession(trust_env=True) as session:
