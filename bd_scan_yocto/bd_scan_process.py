@@ -46,8 +46,8 @@ def run_detect_sigscan(tdir, proj, ver, trust):
     cmd = get_detect()
 
     detect_cmd = cmd
-    detect_cmd += f" --detect.source.path={tdir} --detect.project.name={proj} " + \
-                  f"--detect.project.version.name={ver} "
+    detect_cmd += f" --detect.source.path={tdir} --detect.project.name='{proj}' " + \
+                  f"--detect.project.version.name='{ver}' "
     detect_cmd += f"--blackduck.url={global_values.bd_url} "
     detect_cmd += f"--blackduck.api.token={global_values.bd_api} "
     if trust:
@@ -82,8 +82,8 @@ def run_detect_for_bitbake():
     cmd = get_detect()
 
     detect_cmd = cmd
-    detect_cmd += f" --detect.project.name={global_values.bd_project} " + \
-                  f"--detect.project.version.name={global_values.bd_version} "
+    detect_cmd += f" --detect.project.name='{global_values.bd_project}' " + \
+                  f"--detect.project.version.name='{global_values.bd_version}' "
     detect_cmd += f"--blackduck.url={global_values.bd_url} "
     detect_cmd += f"--blackduck.api.token={global_values.bd_api} "
     detect_cmd += f"--detect.bitbake.build.env.name={global_values.oe_build_env} "
