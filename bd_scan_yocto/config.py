@@ -481,7 +481,7 @@ def input_filepattern(pattern, filedesc, path):
 
 
 def do_wizard():
-    print('\nRUNNING WIZARD (Use --no_wizard to disable) ...')
+    print('\nRUNNING WIZARD (Use --nowizard to disable) ...')
 
     wiz_dict = [
         {'value': 'global_values.bd_url', 'prompt': 'Black Duck server URL', 'vtype': 'string'},
