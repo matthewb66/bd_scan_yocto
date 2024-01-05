@@ -149,15 +149,33 @@ def ignore_components(bd, ver_dict):
 	logging.info("- Ignoring partial components ...")
 	count = 0
 	for comp in bom_compsdict.keys():
-		if pkg_ignore_dict[comp]:
+		ignored = False
+		if global_values.detect_fix:
+			exists_in_manifest = False
+			vername = bom_compsdict[comp]['componentVersionName']
+			if (len(bom_compsdict[comp]['matchTypes']) == 1 and
+					bom_compsdict[comp]['matchTypes'][0] == 'FILE_DEPENDENCY_DIRECT'):
+				extid = bom_compsdict[comp]['origins'][0]['externalId']
+				compname = extid.split('/')[1]
+				if compname in global_values.recipes_dict.keys():
+					if vername == global_values.recipes_dict[compname]:
+						# Exists in license_manifest
+						exists_in_manifest = True
+				if not exists_in_manifest:
+					ignore_array.append(bom_compsdict[comp]['_meta']['href'])
+					count_ignored += 1
+					count += 1
+					ignored = True
+		if not ignored and pkg_ignore_dict[comp]:
 			# Ignore this component
 			ignore_array.append(bom_compsdict[comp]['_meta']['href'])
 			count_ignored += 1
 			count += 1
-			if count_ignored >= 99:
-				ignore_comps.append(ignore_array)
-				ignore_array = []
-				count_ignored = 0
+			ignored = True
+		if ignored and count_ignored >= 99:
+			ignore_comps.append(ignore_array)
+			ignore_array = []
+			count_ignored = 0
 
 	ignore_comps.append(ignore_array)
 	for ignore_array in ignore_comps:

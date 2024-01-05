@@ -66,6 +66,12 @@ parser.add_argument("--image_package_type",
                     default="rpm")
 parser.add_argument("--no_ignore", help="Do not ignore partial components after Signature matching",
                     action='store_true')
+parser.add_argument("--binary_scan", help="Run BDBA binary scan on packages (requires BDBA license)",
+                    action='store_true')
+parser.add_argument("--detect_fix", help="Process license_manifest to ignore build dependencies "
+                    "(required where Detect option --detect.bitbake.dependency.types.excluded=BUILD is not operating "
+                                         "correctly)",
+                    action='store_true')
 parser.add_argument("--testmode", help="Test mode - skip various checks", action='store_true')
 parser.add_argument("--debug", help="Debug logging mode", action='store_true')
 parser.add_argument("--logfile", help="Logging output file", default="")
@@ -219,6 +225,12 @@ def check_args():
 
     if args.no_ignore:
         global_values.ignore_components = False
+
+    if args.binary_scan:
+        global_values.binary_scan = True
+
+    if args.detect_fix:
+        global_values.detect_fix = True
 
     # if args.bblayers_out != "":
     #     if args.extended_scan_layers:

@@ -1,4 +1,4 @@
-# Synopsys Scan Yocto Script - bd_scan_yocto.py - BETA v1.0.7
+# Synopsys Scan Yocto Script - bd_scan_yocto.py - BETA v1.0.8
 
 # PROVISION OF THIS SCRIPT
 This script is provided under the Apache v2 OSS license (see LICENSE file).
@@ -198,6 +198,10 @@ The `bd_scan_yocto` parameters for command line usage are shown below:
      --image_package_type rpm|ipk
                            Type of packages installed (rpm or ipk - default 'rpm')
      --no_ignore           Do not ignore partially matched components from Signature scan
+     --binary_scan         Run an additional binary (BDBA) scan on the downloaded package files (Requires BDBA license)
+     --detect_fix          Add extra logic to process license_manifest to ignore build dependencies
+                           (required where Detect option --detect.bitbake.dependency.types.excluded=BUILD is
+                           not operating correctly) - see section 
      --debug               DEBUG mode - add debug messages to the console log
      --logfile LOGFILE     Specify LOGFILE to store logging messages (will also be sent to the console)
 
@@ -298,6 +302,10 @@ For recipes where a package manager is used, then a standard Synopsys Detect sca
 
 Multiple scans can be combined into the same Black Duck project (ensure to use the Synopsys Detect option `--detect.project.codelocation.unmap=false` to stop previous scans from being unmapped).
 
+# DETECT FIX OPTION
+
+A recent bug in Synopsys Detect can cause a project to have no dependencies because the option --detect.bitbake.dependency.types.excluded=BUILD cannot locate the license.manifest file when Detect is run on the Bitbake project. To determine whether this option should be used, look for the message `No license.manifest file found for target image core-image-sato; every dependency will be considered a BUILD dependency.` in the Detect log, or a project where no dependencies are reported. Add the option '--detect_fix' to remove the build dependency parameter from the Detect run, and then ignore recipes not found in the license.manifest within this script.
+
 # OUTSTANDING ISSUES
 
 The identification of the Linux Kernel version from the Bitbake recipes and association with the upstream component in the KB has not been completed yet. Until an automatic identification is possible, the required Linux Kernel component can be added manually to the Black Duck project.
@@ -333,3 +341,6 @@ The identification of the Linux Kernel version from the Bitbake recipes and asso
 
 ## V1.0.7
 - Added logfile option, migrated to Detect9 and fixed issue with oe_build_env being supplied as a path.
+
+## V1.0.8
+- Added binary_scan option, added quoting of Detect options with potential spaces. Added --detect_fix option.

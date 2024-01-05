@@ -1,4 +1,4 @@
-script_version = '1.0.7'
+script_version = '1.0.8'
 bdio = []
 bdio_comps_layers = []
 bdio_comps_recipes = []
@@ -38,3 +38,6 @@ exclude_layers = []
 detect_opts = ''
 snippets = False
 ignore_components = True
+binary_scan = False
+binary_scan_exts = "*.rpm,*.gz,*.ipx,*.zip,*.xz"
+detect_fix = False

@@ -46,8 +46,8 @@ def run_detect_sigscan(tdir, proj, ver, trust):
     cmd = get_detect()
 
     detect_cmd = cmd
-    detect_cmd += f" --detect.source.path={tdir} --detect.project.name={proj} " + \
-                  f"--detect.project.version.name={ver} "
+    detect_cmd += f" --detect.source.path='{tdir}' --detect.project.name='{proj}' " + \
+                  f"--detect.project.version.name='{ver}' "
     detect_cmd += f"--blackduck.url={global_values.bd_url} "
     detect_cmd += f"--blackduck.api.token={global_values.bd_api} "
     if trust:
@@ -56,6 +56,9 @@ def run_detect_sigscan(tdir, proj, ver, trust):
     if global_values.snippets:
         detect_cmd += "--detect.blackduck.signature.scanner.snippet.matching=SNIPPET_MATCHING "
     detect_cmd += "--detect.timeout=1200 "
+
+    if global_values.binary_scan:
+        detect_cmd += f"--detect.binary.scan.file.name.patterns='{global_values.binary_scan_exts}' "
 
     if global_values.detect_opts != '':
         detect_cmd += global_values.detect_opts
@@ -82,19 +85,20 @@ def run_detect_for_bitbake():
     cmd = get_detect()
 
     detect_cmd = cmd
-    detect_cmd += f" --detect.project.name={global_values.bd_project} " + \
-                  f"--detect.project.version.name={global_values.bd_version} "
+    detect_cmd += f" --detect.project.name='{global_values.bd_project}' " + \
+                  f"--detect.project.version.name='{global_values.bd_version}' "
     detect_cmd += f"--blackduck.url={global_values.bd_url} "
     detect_cmd += f"--blackduck.api.token={global_values.bd_api} "
-    detect_cmd += f"--detect.bitbake.build.env.name={global_values.oe_build_env} "
-    detect_cmd += f"--detect.source.path={global_values.oe_build_envpath} "
+    detect_cmd += f"--detect.bitbake.build.env.name='{global_values.oe_build_env}' "
+    detect_cmd += f"--detect.source.path='{global_values.oe_build_envpath}' "
     if global_values.bd_trustcert:
         detect_cmd += "--blackduck.trust.cert=true "
     detect_cmd += "--detect.wait.for.results=true "
     detect_cmd += "--detect.tools=DETECTOR "
     detect_cmd += "--detect.project.codelocation.unmap=true "
-    detect_cmd += f"--detect.bitbake.package.names={global_values.target} "
-    detect_cmd += "--detect.bitbake.dependency.types.excluded=BUILD "
+    detect_cmd += f"--detect.bitbake.package.names='{global_values.target}' "
+    if not global_values.detect_fix:
+        detect_cmd += "--detect.bitbake.dependency.types.excluded=BUILD "
     if global_values.detect_opts != '':
         detect_cmd += global_values.detect_opts
 
