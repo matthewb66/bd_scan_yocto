@@ -105,7 +105,7 @@ def process_bdproject(bdproj, bdver):
 
 	process_bom(bd, bom_components)
 
-	if global_values.ignore_components:
+	if global_values.ignore_components or global_values.detect_fix:
 		ignore_components(bd, ver_dict)
 	return
 
@@ -166,7 +166,7 @@ def ignore_components(bd, ver_dict):
 					count_ignored += 1
 					count += 1
 					ignored = True
-		if not ignored and pkg_ignore_dict[comp]:
+		if global_values.ignore_components and not ignored and pkg_ignore_dict[comp]:
 			# Ignore this component
 			ignore_array.append(bom_compsdict[comp]['_meta']['href'])
 			count_ignored += 1
@@ -178,6 +178,8 @@ def ignore_components(bd, ver_dict):
 			count_ignored = 0
 
 	ignore_comps.append(ignore_array)
+	if count == 0:
+		return
 	for ignore_array in ignore_comps:
 		bulk_data = {
 			"components": ignore_array,

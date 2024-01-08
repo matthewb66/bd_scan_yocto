@@ -15,7 +15,7 @@ setuptools.setup(
     description="Process a built Yocto project to create a Black Duck project version",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/blackducksoftware/import_yocto_bm",
+    url="https://github.com/matthewb66/bd_scan_yocto",
     packages=setuptools.find_packages(),
     install_requires=['blackduck>=1.0.4',
                       'requests',
