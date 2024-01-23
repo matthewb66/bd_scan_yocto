@@ -126,8 +126,8 @@ def proc_pkg_files():
                 global_values.recipe_layer_dict[recipe] in global_values.exclude_layers:
             continue
 
-        download_regex = re.compile(f"^{recipe}[_-]v.*{ver}[.-].*$")
-        pkg_regex = re.compile(f"^(lib).*{recipe}\d*[_-]v.*{ver}[+.-].*\.{global_values.image_pkgtype}")
+        download_regex = re.compile(f"^{recipe}[_-]v?{ver}[.-].*$")
+        pkg_regex = re.compile(f"^(lib)?{recipe}\d*[_-]v?{ver}[+.-].*\.{global_values.image_pkgtype}")
 
         for path, file in zip(download_paths_list, download_files_list):
             # Check for recipe and version
