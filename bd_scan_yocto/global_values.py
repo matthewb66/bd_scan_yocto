@@ -1,4 +1,4 @@
-script_version = '1.0.8'
+script_version = '1.0.9'
 bdio = []
 bdio_comps_layers = []
 bdio_comps_recipes = []
