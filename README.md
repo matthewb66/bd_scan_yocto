@@ -342,8 +342,8 @@ The identification of the Linux Kernel version from the Bitbake recipes and asso
 ## V1.0.7
 - Added logfile option, migrated to Detect9 and fixed issue with oe_build_env being supplied as a path.
 
-## V1.0.9
-- Added binary_scan option, added quoting of Detect options with potential spaces. Added --detect_fix option.
-
 ## V1.0.8
 - Added binary_scan option, added quoting of Detect options with potential spaces. Added --detect_fix option.
+
+## V1.0.9
+- Added regex fix.
