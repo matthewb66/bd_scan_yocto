@@ -1,4 +1,4 @@
-# Synopsys Scan Yocto Script - bd_scan_yocto.py - BETA v1.0.8
+# Synopsys Scan Yocto Script - bd_scan_yocto.py - BETA v1.0.9
 
 # PROVISION OF THIS SCRIPT
 This script is provided under the Apache v2 OSS license (see LICENSE file).
@@ -341,6 +341,9 @@ The identification of the Linux Kernel version from the Bitbake recipes and asso
 
 ## V1.0.7
 - Added logfile option, migrated to Detect9 and fixed issue with oe_build_env being supplied as a path.
+
+## V1.0.9
+- Added binary_scan option, added quoting of Detect options with potential spaces. Added --detect_fix option.
 
 ## V1.0.8
 - Added binary_scan option, added quoting of Detect options with potential spaces. Added --detect_fix option.
