@@ -77,7 +77,7 @@ Components matched from `import_yocto_bm` have no copyright or deep license data
 # RUNNING BD_SCAN_YOCTO 
 ### SUPPORTED YOCTO PROJECTS
 
-This script is designed to support Yocto versions 2.0 up to 4.2.
+This script is designed to support Yocto versions 2.0 up to 4.3.
 
 ### PREREQUISITES
 
@@ -91,7 +91,7 @@ This script is designed to support Yocto versions 2.0 up to 4.2.
 
 5. Black Duck server credentials (URL and API token) are required.
 
-6. Ensure that the Bitbake project is valid and commands can be run including `bitbake -g` and `bitbake-layers show-recipes`.
+6. Ensure that the Bitbake project is valid and commands can be executed including `bitbake -g` and `bitbake-layers show-recipes`.
 
 7. OPTIONAL: For patched CVE remediation in the Black Duck project, you will need to add the `cve_check` bbclass to the Yocto build configuration to generate the CVE check log output. Add the following line to the `build/conf/local.conf` file:
 
@@ -282,6 +282,24 @@ To perform a CVE check patch analysis ONLY (to update an existing Black Duck pro
       -p myproject -v v1.0 \
       --cve_check_only
 
+### TROUBLESHOOTING
+
+- Check all the prerequisites, and that there is a built Yocto project with a generated license.manifest file.
+
+- Ensure that the Yocto environment is fully defined with the OE init file (`--oe-build-env` option). This script calls Synopsys Detect to extract dependencies which requires that all environment variables are configured within the init file. If necessary, modify the init script to include the additional values, and test with Synopsys Detect standalone first.
+
+- After scan completion, check that there are at least 2 separate code locations in the Source tab in the Black Duck project (one for dependencies and the other for Signature scan).
+
+- Ensure that the Synopsys Detect run has completed successfully, and created entries in the project. Look for items in the project with Match Type of `Direct Dependency`. If none are shown then try running Synopsys Detect standalone to troubleshoot why the dependency scan is not working correctly.
+
+- If the dependency scan exists but shows no components, then examine the console log from the script run, looking for the message `No license.manifest file found for target image core-image-sato; every dependency will be considered a BUILD dependency`. If so, then rerun using the `--detect_fix` option in this script (see section DETECT FIX).
+
+- Examine the `Unmatched Components` from the Synopsys Detect run - these indicate recipes which could not be matched against the Black Duck KB (usually because they have been moved to a new layer, use a new version or revision, or are modified OSS or commercial components). Consider adding manual components to the project to match these components.
+
+- Examine the Signature scan contents within the Source tab to confirm that package files (.rpm, .pki, .tar.gz etc.) were identified and scanned.
+
+- If you are looking for a specific package which appears to be missing from the project, confirm that you are looking for the recipe name not the package name. See the FAQs for an explanation of Yocto recipes versus packages. Check that the package file was included in the Signature scan (within the Source tab).
+
 ### CVE PATCHING
 
 The Yocto `cve_check` class works on the Bitbake dependencies within the dev environment, and produces a list of CVEs identified from the NVD for ALL packages in the development environment.
@@ -294,11 +312,13 @@ See the Prerequisites section above for details on how to configure this script 
 
 # ADDITIONAL SCAN OPTIONS
 
+The Binary scan option (requires separate licensed Binary scan module to be enabled) can be used to run additional scans on the origin package installed in the image.
+
 For a custom C/C++ recipe, or where other languages and package managers are used to build custom recipes, other types of scan could be considered in addition to the techniques used in this script.
 
 For C/C++ recipes, the advanced [blackduck_c_cpp](https://pypi.org/project/blackduck-c-cpp/) utility could be used as part of the build to identify the compiled sources, system includes and operating system dependencies. You would need to modify the build command for the recipe to call the `blackduck-c-cpp` utility as part of a scanning cycle after it had been configured to connect to the Black Duck server.
 
-For recipes where a package manager is used, then a standard Synopsys Detect scan in DETECTOR mode could be utilised to analyse the project dependencies.
+For recipes where a package manager is used, then a standard Synopsys Detect scan in DETECTOR mode could be utilised to analyse the project dependencies separately.
 
 Multiple scans can be combined into the same Black Duck project (ensure to use the Synopsys Detect option `--detect.project.codelocation.unmap=false` to stop previous scans from being unmapped).
 
@@ -315,6 +335,14 @@ The identification of the Linux Kernel version from the Bitbake recipes and asso
 1. Can this utility be used on a Yocto image without access to the build environment?
 
    _No - this utility needs access to the Yocto build environment including the cache of downloaded components and rpm packages to perform scans._
+
+1. I cannot see a specific package in the Black Duck project.
+
+   _Black Duck reports recipes in the Yocto project not individual packages. Multiple packages can be combined into a single recipe, but these are typically not downloaded separately and are considered to be part of the main component managed by the recipe, not individual OSS components._
+
+1. I cannot see the Linux kernel in the Black Duck project.
+
+   _The kernel cannot be identified due to a custom name format being used in Yocto. See the section OUTSTANDING ISSUES above. Add the required kernel version to the project manually._
 
 # UPDATE HISTORY
 
