@@ -332,17 +332,47 @@ The identification of the Linux Kernel version from the Bitbake recipes and asso
 
 # FAQs
 
-1. Can this utility be used on a Yocto image without access to the build environment?
+1. Why couldn't I just use the license data provided by Yocto in the license.manifest?
+
+   _The licenses reported by Bitbake come straight from the recipe files used to build the project.
+   However, the applicable license for each package is the actual declared license reported in the origin repository,
+   which may not match the license name in the recipe used to build/install the package. Furthermore, the obligations of
+   most OSS licenses require that the full license text is included in the distribution along with any relevant copyrights.
+   Another concern is that most OSS packages use or encapsulate other OSS which can have different licenses to the declared
+   license in the main package, and in some cases re-licensing is not allowed meaning that the declared license of the main
+   is not applicable. Black Duck uses the licenses from the origin packages (not the Yocto recipe), supports full
+   license text and copyrights as well as optional deep license analysis to identify embedded licenses within packages._
+
+
+2. Can this utility be used on a Yocto image without access to the build environment?
 
    _No - this utility needs access to the Yocto build environment including the cache of downloaded components and rpm packages to perform scans._
 
-1. I cannot see a specific package in the Black Duck project.
+
+3. Why couldn't I simply use the `cve-check` class provided by Yocto to determine unpatched vulnerabilities?
+
+   _The cve-check class processes all recipes in the build and then looks up packages in the NVD to try to associate CVEs. The script reports all packages including build dependencies as opposed to the packages only in the distributed image which is usually not useful.
+   The CVE association uses CPE (package enumerators) to match packages, but this uses wildcards which result in a large number of false positive CVEs being reported.
+   For example, for a sample Yocto 4.1 minimal build, cve-check reported 160 total unpatched CVEs of which 14 were shown against zlib, however the Black Duck project shows that none of these should be associated with the zlib version in the build (only 3 patched and 0 unpatched vulnerabilities should be shown in the project)._
+
+
+4. Why couldn't I just use the `create-spdx` class provided by Yocto to export a full SBOM?
+
+   _The Yocto `create-spdx` class produces SPDX JSON files for the packages in the project with the runtime packages also identified,
+   including useful data such as the list of files in the image per package with hashes.
+   However, many of the SPDX fields are blank (NO-ASSERTION) including license text, copyrights etc.
+   The packages are also not identified by PURL so the SBOM cannot be effectively imported into other tools (including Black Duck)._
+
+
+5. I cannot see a specific package in the Black Duck project.
 
    _Black Duck reports recipes in the Yocto project not individual packages. Multiple packages can be combined into a single recipe, but these are typically not downloaded separately and are considered to be part of the main component managed by the recipe, not individual OSS components._
 
-1. I cannot see the Linux kernel in the Black Duck project.
+
+6. I cannot see the Linux kernel in the Black Duck project.
 
    _The kernel cannot be identified due to a custom name format being used in Yocto. See the section OUTSTANDING ISSUES above. Add the required kernel version to the project manually._
+
 
 # UPDATE HISTORY
 
