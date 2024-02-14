@@ -29,10 +29,11 @@ parser.add_argument("--oe_build_env",
 parser.add_argument("-t", "--target", help="Yocto target (default 'core-image-sato') (REQUIRED)",
                     default="core-image-sato")
 parser.add_argument("-m", "--manifest",
-                    help="Built license.manifest file)",
+                    help="Built license.manifest file (usually under ",
                     default="")
-parser.add_argument("--machine", help="Machine Architecture (for example 'qemux86_64')",
-                    default="qemux86_64")
+parser.add_argument("--machine", help="Machine Architecture (for example 'qemux86_64' - usually extracted"
+                                      "from Bitbake environment)",
+                    default="")
 parser.add_argument("--skip_detect_for_bitbake", help="Skip running Detect for Bitbake dependencies",
                     action='store_true')
 parser.add_argument("--detect_opts", help="Additional Synopsys Detect options", default="")
@@ -170,22 +171,15 @@ def check_args():
     if args.image_package_type != '':
         global_values.image_pkgtype = args.image_package_type
 
-    if args.cve_check_only or args.cve_check_file != '':
-        global_values.cve_check = True
+    if args.no_cve_check:
+        global_values.cve_check = False
 
-    if args.cve_check_file != "":
-        if args.no_cve_check:
-            logging.error("Options cve_check_file and no_cve_check cannot be specified together")
-            sys.exit(2)
-
+    if global_values.cve_check and args.cve_check_file != "":
         if not os.path.isfile(args.cve_check_file):
-            logging.warning(f"CVE check output file '{args.cve_check_file}' does not exist")
+            logging.error(f"CVE check output file '{args.cve_check_file}' does not exist")
+            sys.exit(2)
         else:
             global_values.cve_check_file = args.cve_check_file
-
-    if args.cve_check_only and args.no_cve_check:
-        logging.error("Options --cve_check_only and --no_cve_check cannot be specified together")
-        sys.exit(2)
 
     if args.manifest != "":
         if not os.path.isfile(args.manifest):
@@ -343,12 +337,12 @@ def find_yocto_files():
             imgdir = os.path.join(global_values.deploy_dir, "images", machine)
             cvefile = ""
             for file in sorted(os.listdir(imgdir)):
-                if file.startswith(global_values.target + "-" + machine + "-") and \
-                        file.endswith('rootfs.cve'):
+                if file == global_values.target + "-" + machine + ".cve":
                     cvefile = os.path.join(imgdir, file)
 
             if not os.path.isfile(cvefile):
                 logging.warning(f"CVE check file {cvefile} could not be located")
+                global_values.cve_check = False
             else:
                 logging.info(f"Located CVE check output file {cvefile}")
                 global_values.cve_check_file = cvefile

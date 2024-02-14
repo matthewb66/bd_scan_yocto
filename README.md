@@ -1,4 +1,4 @@
-# Synopsys Scan Yocto Script - bd_scan_yocto.py - BETA v1.0.9
+# Synopsys Scan Yocto Script - bd_scan_yocto.py - BETA v1.0.10
 
 # PROVISION OF THIS SCRIPT
 This script is provided under the Apache v2 OSS license (see LICENSE file).
@@ -214,9 +214,9 @@ The Yocto target should be specified using for example `--target core-image-sato
 
 The machine (architecture) will be extracted from the Bitbake environment automatically, but the `--machine` option can be used to specify manually.
 
-The most recent Bitbake output manifest file (located in the `build/tmp/deploy/licenses/<image>-<target>-<datetime>/license.manifest` file) will be located automatically. Use the `--manifest` option to specify the manifest file manually.
+The most recent Bitbake output manifest file (usually the file `build/tmp/deploy/licenses/<image>-<target>-<datetime>/license.manifest`) will be located automatically. Use the `--manifest` option to specify the manifest file manually.
 
-The most recent cve\_check log file `build/tmp/deploy/images/<arch>/<image>-<target>-<datetime>.rootfs.cve` will be located automatically if it exists. Use the `--cve_check_file` option to specify the cve\_check log file location manually (for example to use an older copy).
+The most recent cve\_check log file `build/tmp/deploy/images/<arch>/<image>-<target>.cve` will be located automatically if it exists. Use the `--cve_check_file` option to specify the cve\_check log file location manually (for example to use an older copy).
 
 Use the `--cve_check_only` option to skip the scanning and creation of a project, only looking for a CVE check output log file to identify and patch matched CVEs within an existing Black Duck project (which must have been created previously).
 
@@ -251,6 +251,7 @@ Use the following command to scan a Yocto project (with default oe-build-env 'oe
       --blackduck_url https://SERVER_URL \
       --blackduck_api_token TOKEN \
       --blackduck_trust_cert \
+      -t core-image-minimal \
       -p myproject -v v1.0
 
 To scan a Yocto project with a custom oe-init script, specified target 'core-image-minimal' and a different license manifest as opposed to the most recent one:

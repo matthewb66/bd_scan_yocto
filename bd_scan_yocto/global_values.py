@@ -1,4 +1,4 @@
-script_version = '1.0.9'
+script_version = '1.0.10'
 bdio = []
 bdio_comps_layers = []
 bdio_comps_recipes = []
@@ -24,7 +24,7 @@ pkg_dir = ''
 image_pkgtype = ''
 manifest_file = ''
 machine = ''
-cve_check = False
+cve_check = True
 cve_check_file = ''
 detect_jar = ''
 target = ''
