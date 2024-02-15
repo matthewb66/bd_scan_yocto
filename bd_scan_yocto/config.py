@@ -26,8 +26,8 @@ parser.add_argument("-v", "--version", help="Black Duck project version to creat
 parser.add_argument("--oe_build_env",
                     help="Yocto build environment config file (default 'oe-init-build-env')",
                     default="oe-init-build-env")
-parser.add_argument("-t", "--target", help="Yocto target (default 'core-image-sato') (REQUIRED)",
-                    default="core-image-sato")
+parser.add_argument("-t", "--target", help="Yocto target (e.g. core-image-sato - REQUIRED)",
+                    default="")
 parser.add_argument("-m", "--manifest",
                     help="Built license.manifest file (usually under ",
                     default="")
@@ -200,6 +200,8 @@ def check_args():
 
     if args.target != "":
         global_values.target = args.target
+    else:
+        logging.warning("Target should be specified (--target)")
 
     if args.skip_detect_for_bitbake:
         global_values.skip_detect_for_bitbake = True
@@ -346,6 +348,7 @@ def find_yocto_files():
             for file in sorted(os.listdir(imgdir)):
                 if file == global_values.target + "-" + machine + ".cve":
                     cvefile = os.path.join(imgdir, file)
+                    break
 
             if not os.path.isfile(cvefile):
                 logging.warning(f"CVE check file {cvefile} could not be located - skipping CVE processing")
