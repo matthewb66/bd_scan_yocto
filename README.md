@@ -1,4 +1,4 @@
-# Synopsys Scan Yocto Script - bd_scan_yocto.py - BETA v1.0.9
+# Synopsys Scan Yocto Script - bd_scan_yocto.py - BETA v1.0.10
 
 # PROVISION OF THIS SCRIPT
 This script is provided under the Apache v2 OSS license (see LICENSE file).
@@ -116,8 +116,7 @@ The minimum data required to run the script is:
 - Black Duck API token with scan permissions
 - Black Duck project and project version name to be created
 - OE initialization script (if not `oe-init-build-env`)
-- Yocto target name (default `core-image-sato`)
-- Yocto machine name (default `qemux86-64`)
+- Yocto target name
 
 Use python to run the script `bd_scan_yocto/main.py` without arguments to invoke the wizard to guide you 
 through the required information and options, for example (where SCRIPT_DIR is the folder where the script has been
@@ -165,7 +164,7 @@ The `bd_scan_yocto` parameters for command line usage are shown below:
                            Yocto build environment config file (default 'oe-init-
                            build-env' - must exist in invocation folder not full PATH)
      -t TARGET, --target TARGET
-                           Yocto target (default core-image-sato)
+                           Yocto target (e.g. core-image-sato - REQUIRED)
      -m MANIFEST, --manifest MANIFEST
                            Built license.manifest file
      --machine MACHINE     Machine Architecture (for example 'qemux86-64')
@@ -195,8 +194,8 @@ The `bd_scan_yocto` parameters for command line usage are shown below:
                            downloaded (usually poky/build/downloads)
      --package_dir PKG_DIR Download directory where packages are downloaded
                            (usually poky/build/tmp/deploy/rpm/<ARCH>)
-     --image_package_type rpm|ipk
-                           Type of packages installed (rpm or ipk - default 'rpm')
+     --image_package_type rpm|deb|ipk
+                           Type of packages installed (rpm, deb or ipk - default 'rpm')
      --no_ignore           Do not ignore partially matched components from Signature scan
      --binary_scan         Run an additional binary (BDBA) scan on the downloaded package files (Requires BDBA license)
      --detect_fix          Add extra logic to process license_manifest to ignore build dependencies
@@ -210,13 +209,13 @@ The script needs to be executed in the Yocto project folder (e.g. `yocto_zeus/po
 
 The `--project` and `--version` options are required to define the Black Duck project and version names.
 
-The Yocto target should be specified using for example `--target core-image-sato`, although the default value (core-image-sato) will be used if not specified.
+The Yocto target should be specified using for example `--target core-image-sato`.
 
 The machine (architecture) will be extracted from the Bitbake environment automatically, but the `--machine` option can be used to specify manually.
 
-The most recent Bitbake output manifest file (located in the `build/tmp/deploy/licenses/<image>-<target>-<datetime>/license.manifest` file) will be located automatically. Use the `--manifest` option to specify the manifest file manually.
+The most recent Bitbake output manifest file (usually the file `build/tmp/deploy/licenses/<image>-<target>-<datetime>/license.manifest`) will be located automatically. Use the `--manifest` option to specify the manifest file manually.
 
-The most recent cve\_check log file `build/tmp/deploy/images/<arch>/<image>-<target>-<datetime>.rootfs.cve` will be located automatically if it exists. Use the `--cve_check_file` option to specify the cve\_check log file location manually (for example to use an older copy).
+The most recent cve\_check log file `build/tmp/deploy/images/<arch>/<image>-<target>.cve` will be located automatically if it exists. Use the `--cve_check_file` option to specify the cve\_check log file location manually (for example to use an older copy).
 
 Use the `--cve_check_only` option to skip the scanning and creation of a project, only looking for a CVE check output log file to identify and patch matched CVEs within an existing Black Duck project (which must have been created previously).
 
@@ -231,6 +230,7 @@ You will need to specify the Black Duck server URL, API_TOKEN, project and versi
       --blackduck_trust_cert (specify if untrusted CA certificate used for BD server)
       --project PROJECT_NAME
       --version VERSION_NAME
+      --target core-image-minimal
 
 You can also set the URL and API Token by setting environment variables:
 
@@ -251,6 +251,7 @@ Use the following command to scan a Yocto project (with default oe-build-env 'oe
       --blackduck_url https://SERVER_URL \
       --blackduck_api_token TOKEN \
       --blackduck_trust_cert \
+      -t core-image-minimal \
       -p myproject -v v1.0
 
 To scan a Yocto project with a custom oe-init script, specified target 'core-image-minimal' and a different license manifest as opposed to the most recent one:
@@ -271,6 +272,7 @@ To skip the Synopsys Detect Yocto scan and Signature scan the downloaded package
       --blackduck_api_token TOKEN \
       --blackduck_trust_cert \
       -p myproject -v v1.0 \
+      -t core-image-minimal \
       --skip_detect_for_bitbake
 
 To perform a CVE check patch analysis ONLY (to update an existing Black Duck project created previously by the script with patched vulnerabilities) use the command:
@@ -280,6 +282,7 @@ To perform a CVE check patch analysis ONLY (to update an existing Black Duck pro
       --blackduck_api_token TOKEN \
       --blackduck_trust_cert \
       -p myproject -v v1.0 \
+      -t core-image-minimal \
       --cve_check_only
 
 ### TROUBLESHOOTING
@@ -405,3 +408,6 @@ The identification of the Linux Kernel version from the Bitbake recipes and asso
 
 ## V1.0.9
 - Added regex fix.
+
+## V1.0.10
+- Fixed CVE file locations, removed default target name, added deb file support.

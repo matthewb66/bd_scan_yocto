@@ -26,13 +26,14 @@ parser.add_argument("-v", "--version", help="Black Duck project version to creat
 parser.add_argument("--oe_build_env",
                     help="Yocto build environment config file (default 'oe-init-build-env')",
                     default="oe-init-build-env")
-parser.add_argument("-t", "--target", help="Yocto target (default 'core-image-sato') (REQUIRED)",
-                    default="core-image-sato")
-parser.add_argument("-m", "--manifest",
-                    help="Built license.manifest file)",
+parser.add_argument("-t", "--target", help="Yocto target (e.g. core-image-sato - REQUIRED)",
                     default="")
-parser.add_argument("--machine", help="Machine Architecture (for example 'qemux86_64')",
-                    default="qemux86_64")
+parser.add_argument("-m", "--manifest",
+                    help="Built license.manifest file (usually under ",
+                    default="")
+parser.add_argument("--machine", help="Machine Architecture (for example 'qemux86_64' - usually extracted"
+                                      "from Bitbake environment)",
+                    default="")
 parser.add_argument("--skip_detect_for_bitbake", help="Skip running Detect for Bitbake dependencies",
                     action='store_true')
 parser.add_argument("--detect_opts", help="Additional Synopsys Detect options", default="")
@@ -62,7 +63,7 @@ parser.add_argument("--package_dir",
                          "(for example poky/build/tmp/deploy/rpm/<ARCH>)",
                     default="")
 parser.add_argument("--image_package_type",
-                    help="Package type used for installing packages (e.g. rpm or ipx)",
+                    help="Package type used for installing packages (e.g. rpm, deb or ipx)",
                     default="rpm")
 parser.add_argument("--no_ignore", help="Do not ignore partial components after Signature matching",
                     action='store_true')
@@ -170,22 +171,14 @@ def check_args():
     if args.image_package_type != '':
         global_values.image_pkgtype = args.image_package_type
 
-    if args.cve_check_only or args.cve_check_file != '':
-        global_values.cve_check = True
+    if args.no_cve_check:
+        global_values.cve_check = False
 
-    if args.cve_check_file != "":
-        if args.no_cve_check:
-            logging.error("Options cve_check_file and no_cve_check cannot be specified together")
-            sys.exit(2)
-
+    if global_values.cve_check and args.cve_check_file != "":
         if not os.path.isfile(args.cve_check_file):
-            logging.warning(f"CVE check output file '{args.cve_check_file}' does not exist")
+            logging.error(f"CVE check output file '{args.cve_check_file}' does not exist")
         else:
             global_values.cve_check_file = args.cve_check_file
-
-    if args.cve_check_only and args.no_cve_check:
-        logging.error("Options --cve_check_only and --no_cve_check cannot be specified together")
-        sys.exit(2)
 
     if args.manifest != "":
         if not os.path.isfile(args.manifest):
@@ -207,6 +200,8 @@ def check_args():
 
     if args.target != "":
         global_values.target = args.target
+    else:
+        logging.warning("Target should be specified (--target)")
 
     if args.skip_detect_for_bitbake:
         global_values.skip_detect_for_bitbake = True
@@ -280,9 +275,11 @@ def get_bitbake_env():
 
         rpm_dir = ''
         ipk_dir = ''
+        deb_dir = ''
         for mline in lines:
             if re.search(
-                    "^(MANIFEST_FILE|DEPLOY_DIR|MACHINE_ARCH|DL_DIR|DEPLOY_DIR_RPM|DEPLOY_DIR_IPK|IMAGE_PKGTYPE)=",
+                    "^(MANIFEST_FILE|DEPLOY_DIR|MACHINE_ARCH|DL_DIR|DEPLOY_DIR_RPM|"
+                    "DEPLOY_DIR_IPK|DEPLOY_DIR_DEB|IMAGE_PKGTYPE)=",
                     mline):
 
                 # if re.search('^TMPDIR=', mline):
@@ -306,6 +303,9 @@ def get_bitbake_env():
                 elif ipk_dir == '' and re.search('^DEPLOY_DIR_IPK=', mline):
                     ipk_dir = val
                     logging.info(f"Bitbake Env: ipk_dir={ipk_dir}")
+                elif deb_dir == '' and re.search('^DEPLOY_DIR_DEB=', mline):
+                    deb_dir = val
+                    logging.info(f"Bitbake Env: deb_dir={deb_dir}")
                 elif re.search('^IMAGE_PKGTYPE=', mline):
                     global_values.image_pkgtype = val
                     logging.info(f"Bitbake Env: image_pkgtype={global_values.image_pkgtype}")
@@ -314,6 +314,8 @@ def get_bitbake_env():
             global_values.pkg_dir = rpm_dir
         elif global_values.image_pkgtype == 'ipk' and ipk_dir != '':
             global_values.pkg_dir = ipk_dir
+        elif global_values.image_pkgtype == 'deb' and deb_dir != '':
+            global_values.pkg_dir = deb_dir
 
 
 def find_yocto_files():
@@ -339,20 +341,21 @@ def find_yocto_files():
     if global_values.cve_check_file == '' and global_values.cve_check:
         if global_values.target == '':
             logging.warning("CVE check file not specified and it could not be determined as Target not specified")
+            global_values.cve_check = False
         else:
             imgdir = os.path.join(global_values.deploy_dir, "images", machine)
             cvefile = ""
             for file in sorted(os.listdir(imgdir)):
-                if file.startswith(global_values.target + "-" + machine + "-") and \
-                        file.endswith('rootfs.cve'):
+                if file == global_values.target + "-" + machine + ".cve":
                     cvefile = os.path.join(imgdir, file)
+                    break
 
             if not os.path.isfile(cvefile):
-                logging.warning(f"CVE check file {cvefile} could not be located")
+                logging.warning(f"CVE check file {cvefile} could not be located - skipping CVE processing")
+                global_values.cve_check = False
             else:
                 logging.info(f"Located CVE check output file {cvefile}")
                 global_values.cve_check_file = cvefile
-                global_values.cve_check = True
 
     return
 
