@@ -141,7 +141,7 @@ def proc_pkg_files():
                 else:
                     files_to_copy.append(path)
                 found = True
-                logging.info(f"- Recipe package {recipe}/{ver} - Located package file: {path}")
+                logging.info(f"- Recipe:{recipe}/{ver} - Located package file: {path}")
         if found:
             continue
 

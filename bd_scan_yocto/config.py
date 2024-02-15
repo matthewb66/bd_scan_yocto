@@ -63,7 +63,7 @@ parser.add_argument("--package_dir",
                          "(for example poky/build/tmp/deploy/rpm/<ARCH>)",
                     default="")
 parser.add_argument("--image_package_type",
-                    help="Package type used for installing packages (e.g. rpm or ipx)",
+                    help="Package type used for installing packages (e.g. rpm, deb or ipx)",
                     default="rpm")
 parser.add_argument("--no_ignore", help="Do not ignore partial components after Signature matching",
                     action='store_true')
@@ -177,7 +177,6 @@ def check_args():
     if global_values.cve_check and args.cve_check_file != "":
         if not os.path.isfile(args.cve_check_file):
             logging.error(f"CVE check output file '{args.cve_check_file}' does not exist")
-            sys.exit(2)
         else:
             global_values.cve_check_file = args.cve_check_file
 
@@ -274,9 +273,11 @@ def get_bitbake_env():
 
         rpm_dir = ''
         ipk_dir = ''
+        deb_dir = ''
         for mline in lines:
             if re.search(
-                    "^(MANIFEST_FILE|DEPLOY_DIR|MACHINE_ARCH|DL_DIR|DEPLOY_DIR_RPM|DEPLOY_DIR_IPK|IMAGE_PKGTYPE)=",
+                    "^(MANIFEST_FILE|DEPLOY_DIR|MACHINE_ARCH|DL_DIR|DEPLOY_DIR_RPM|"
+                    "DEPLOY_DIR_IPK|DEPLOY_DIR_DEB|IMAGE_PKGTYPE)=",
                     mline):
 
                 # if re.search('^TMPDIR=', mline):
@@ -300,6 +301,9 @@ def get_bitbake_env():
                 elif ipk_dir == '' and re.search('^DEPLOY_DIR_IPK=', mline):
                     ipk_dir = val
                     logging.info(f"Bitbake Env: ipk_dir={ipk_dir}")
+                elif deb_dir == '' and re.search('^DEPLOY_DIR_DEB=', mline):
+                    deb_dir = val
+                    logging.info(f"Bitbake Env: deb_dir={deb_dir}")
                 elif re.search('^IMAGE_PKGTYPE=', mline):
                     global_values.image_pkgtype = val
                     logging.info(f"Bitbake Env: image_pkgtype={global_values.image_pkgtype}")
@@ -308,6 +312,8 @@ def get_bitbake_env():
             global_values.pkg_dir = rpm_dir
         elif global_values.image_pkgtype == 'ipk' and ipk_dir != '':
             global_values.pkg_dir = ipk_dir
+        elif global_values.image_pkgtype == 'deb' and deb_dir != '':
+            global_values.pkg_dir = deb_dir
 
 
 def find_yocto_files():
@@ -333,6 +339,7 @@ def find_yocto_files():
     if global_values.cve_check_file == '' and global_values.cve_check:
         if global_values.target == '':
             logging.warning("CVE check file not specified and it could not be determined as Target not specified")
+            global_values.cve_check = False
         else:
             imgdir = os.path.join(global_values.deploy_dir, "images", machine)
             cvefile = ""
@@ -341,12 +348,11 @@ def find_yocto_files():
                     cvefile = os.path.join(imgdir, file)
 
             if not os.path.isfile(cvefile):
-                logging.warning(f"CVE check file {cvefile} could not be located")
+                logging.warning(f"CVE check file {cvefile} could not be located - skipping CVE processing")
                 global_values.cve_check = False
             else:
                 logging.info(f"Located CVE check output file {cvefile}")
                 global_values.cve_check_file = cvefile
-                global_values.cve_check = True
 
     return
 

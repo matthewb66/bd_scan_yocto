@@ -272,6 +272,7 @@ To skip the Synopsys Detect Yocto scan and Signature scan the downloaded package
       --blackduck_api_token TOKEN \
       --blackduck_trust_cert \
       -p myproject -v v1.0 \
+      -t core-image-minimal \
       --skip_detect_for_bitbake
 
 To perform a CVE check patch analysis ONLY (to update an existing Black Duck project created previously by the script with patched vulnerabilities) use the command:
@@ -281,6 +282,7 @@ To perform a CVE check patch analysis ONLY (to update an existing Black Duck pro
       --blackduck_api_token TOKEN \
       --blackduck_trust_cert \
       -p myproject -v v1.0 \
+      -t core-image-minimal \
       --cve_check_only
 
 ### CVE PATCHING
@@ -348,3 +350,6 @@ The identification of the Linux Kernel version from the Bitbake recipes and asso
 
 ## V1.0.9
 - Added regex fix.
+
+## V1.0.10
+- Fixed CVE file locations, removed default target name, added deb file support.

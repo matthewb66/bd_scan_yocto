@@ -39,5 +39,5 @@ detect_opts = ''
 snippets = False
 ignore_components = True
 binary_scan = False
-binary_scan_exts = "*.rpm,*.gz,*.ipx,*.zip,*.xz"
+binary_scan_exts = "*.rpm,*.deb,*.tar,*.gz,*.ipk,*.zip,*.xz"
 detect_fix = False
