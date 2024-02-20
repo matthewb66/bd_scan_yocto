@@ -23,6 +23,10 @@ def main():
     if not config.args.cve_check_only and not config.args.nowizard:
         config.do_wizard()
 
+    if global_values.target == "":
+        logging.error("Yocto target not specified and not provided by wizard (or wizard skipped) - EXITING")
+        sys.exit(2)
+
     bd = config.connect()
     if bd is None:
         logging.error(f"Cannot connect to specified BD server {global_values.bd_url}")
