@@ -116,8 +116,7 @@ The minimum data required to run the script is:
 - Black Duck API token with scan permissions
 - Black Duck project and project version name to be created
 - OE initialization script (if not `oe-init-build-env`)
-- Yocto target name (default `core-image-sato`)
-- Yocto machine name (default `qemux86-64`)
+- Yocto target name
 
 Use python to run the script `bd_scan_yocto/main.py` without arguments to invoke the wizard to guide you 
 through the required information and options, for example (where SCRIPT_DIR is the folder where the script has been
@@ -165,7 +164,7 @@ The `bd_scan_yocto` parameters for command line usage are shown below:
                            Yocto build environment config file (default 'oe-init-
                            build-env' - must exist in invocation folder not full PATH)
      -t TARGET, --target TARGET
-                           Yocto target (default core-image-sato)
+                           Yocto target (e.g. core-image-sato - REQUIRED)
      -m MANIFEST, --manifest MANIFEST
                            Built license.manifest file
      --machine MACHINE     Machine Architecture (for example 'qemux86-64')
@@ -195,8 +194,8 @@ The `bd_scan_yocto` parameters for command line usage are shown below:
                            downloaded (usually poky/build/downloads)
      --package_dir PKG_DIR Download directory where packages are downloaded
                            (usually poky/build/tmp/deploy/rpm/<ARCH>)
-     --image_package_type rpm|ipk
-                           Type of packages installed (rpm or ipk - default 'rpm')
+     --image_package_type rpm|deb|ipk
+                           Type of packages installed (rpm, deb or ipk - default 'rpm')
      --no_ignore           Do not ignore partially matched components from Signature scan
      --binary_scan         Run an additional binary (BDBA) scan on the downloaded package files (Requires BDBA license)
      --detect_fix          Add extra logic to process license_manifest to ignore build dependencies
@@ -210,7 +209,7 @@ The script needs to be executed in the Yocto project folder (e.g. `yocto_zeus/po
 
 The `--project` and `--version` options are required to define the Black Duck project and version names.
 
-The Yocto target should be specified using for example `--target core-image-sato`, although the default value (core-image-sato) will be used if not specified.
+The Yocto target should be specified using for example `--target core-image-sato`.
 
 The machine (architecture) will be extracted from the Bitbake environment automatically, but the `--machine` option can be used to specify manually.
 
@@ -231,6 +230,7 @@ You will need to specify the Black Duck server URL, API_TOKEN, project and versi
       --blackduck_trust_cert (specify if untrusted CA certificate used for BD server)
       --project PROJECT_NAME
       --version VERSION_NAME
+      --target core-image-minimal
 
 You can also set the URL and API Token by setting environment variables:
 
