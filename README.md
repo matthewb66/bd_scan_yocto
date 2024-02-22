@@ -57,12 +57,12 @@ The script must be executed on a Linux workstation where Yocto has been installe
 
 The automatic scan behaviour of `bd_scan_yocto` is described below:
 1. Use a wizard to collect required options not specified on the command line or in environment variables
-2. Locate the OE initialization script in the invocation folder (default `oe-init-build-env`)
+2. Locate the OE initialization script in the invocation folder (bypass if --no_init_script used).
 3. Extract information from the Bitbake environment (by running `bitbake -e` and optionally `bitbake-layers show-recipes` if layer specific options are specified)
 4. Run Synopsys Detect in Bitbake dependency scan mode to extract the standard OE recipes/dependencies (skipped if `--skip_detect_for_bitbake` option is used) to create the specified Black Duck project & version
-5. Locate the software components and rpm packages downloaded during the build, and copy those matching the recipes from license.manifest to a temporary folder (if the option `--exclude_layers layer1,layer2` is applied then skip recipes within the specified layers)
+5. Locate the software components and rpm/ipk/deb packages downloaded during the build, and copy those matching the recipes in license.manifest to a temporary folder (if the option `--exclude_layers layer1,layer2` is applied then skip recipes within the specified layers)
 6. If the option `--extended_scan_layers layer1,layer2` is specified with a list of layers, then expand (decompress) the archives for the recipes in the listed layers. 
-7. Run a Signature scan using Synopsys Detect on the copied/expanded and rpm packages and append to the specified Black Duck project. If `--snippet` is specified then add snippet scanning, adding other Detect scan options with the `--detect_opts` option (for example, local copyright and license scanning with the option `--detect_opts '--detect.blackduck.signature.scanner.license.search=true --detect.blackduck.signature.scanner.copyright.search=true'`)
+7. Run a Signature scan using Synopsys Detect on the copied/expanded and rpm/ipk/deb packages and append to the specified Black Duck project. If `--snippet` is specified then add snippet scanning, adding other Detect scan options with the `--detect_opts` option (for example, local copyright and license scanning with the option `--detect_opts '--detect.blackduck.signature.scanner.license.search=true --detect.blackduck.signature.scanner.copyright.search=true'`)
 8. Wait for scan completion, and then post-process the project version BOM to remove identified subcomponents from the unexpanded archives and rpm packages only. This step is required because Signature scanning can sometimes match a complete package, but continue to scan at lower levels to find embedded OSS components which can lead to false-positive matches, although this behaviour is useful for custom recipes (hence why expanded archives are excluded from this process)
 9. Optionally identify locally patched CVEs and apply to BD project
 
@@ -77,7 +77,7 @@ Components matched from `import_yocto_bm` have no copyright or deep license data
 # RUNNING BD_SCAN_YOCTO 
 ### SUPPORTED YOCTO PROJECTS
 
-This script is designed to support Yocto versions 2.0 up to 4.3.
+This script is designed to support Yocto versions 2.0 up to 4.4.
 
 ### PREREQUISITES
 
@@ -108,14 +108,14 @@ This script is designed to support Yocto versions 2.0 up to 4.3.
 
 ### USAGE
 
-Change to the poky folder where the OE initialization script exists (`oe-init-build-env` by default).
+Change to the poky folder where the OE initialization script exists.
 
 The minimum data required to run the script is:
 
 - Black Duck server URL
 - Black Duck API token with scan permissions
 - Black Duck project and project version name to be created
-- OE initialization script (if not `oe-init-build-env`)
+- OE initialization script (for example `oe-init-build-env`)
 - Yocto target name
 
 Use python to run the script `bd_scan_yocto/main.py` without arguments to invoke the wizard to guide you 
@@ -198,7 +198,7 @@ The `bd_scan_yocto` parameters for command line usage are shown below:
                            Type of packages installed (rpm, deb or ipk - default 'rpm')
      --no_ignore           Do not ignore partially matched components from Signature scan
      --binary_scan         Run an additional binary (BDBA) scan on the downloaded package files (Requires BDBA license)
-     --no_init_script      Bypass using the OE init script taking environment from current shell
+     --no_init_script      Bypass using the OE init script, taking environment from current shell
                            (requires --skip_detect_for_bitbake to be specified)
      --detect_fix          Add extra logic to process license_manifest to ignore build dependencies
                            (required where Detect option --detect.bitbake.dependency.types.excluded=BUILD is
@@ -207,11 +207,11 @@ The `bd_scan_yocto` parameters for command line usage are shown below:
      --logfile LOGFILE     Specify LOGFILE to store logging messages (will also be sent to the console)
 
 
-The script needs to be executed in the Yocto project folder (e.g. `yocto_zeus/poky`) where the OE initialisation script is located (`oe-init-build-env` by default).
+The script needs to be executed in the Yocto project folder (e.g. `yocto_zeus/poky`) where the OE initialisation script is located (for example `oe-init-build-env`).
 
 The `--project` and `--version` options are required to define the Black Duck project and version names.
 
-The Yocto target should be specified using for example `--target core-image-sato`.
+The Yocto target must be specified using for example `--target core-image-sato`.
 
 The machine (architecture) will be extracted from the Bitbake environment automatically, but the `--machine` option can be used to specify manually.
 
@@ -225,7 +225,7 @@ Use the `--no_cve_check` option to skip the patched CVE identification and updat
 
 ### BLACK DUCK CONFIGURATION
 
-You will need to specify the Black Duck server URL, API_TOKEN, project and version using command line options:
+You will need to specify the Black Duck server URL, API_TOKEN, project and version using command line options - the minimum set is shown below:
 
       --blackduck_url https://SERVER_URL
       --blackduck_api_token TOKEN
@@ -233,6 +233,7 @@ You will need to specify the Black Duck server URL, API_TOKEN, project and versi
       --project PROJECT_NAME
       --version VERSION_NAME
       --target core-image-minimal
+      --oe-build-env oe-init-build-env
 
 You can also set the URL and API Token by setting environment variables:
 
@@ -254,6 +255,7 @@ Use the following command to scan a Yocto project (with default oe-build-env 'oe
       --blackduck_api_token TOKEN \
       --blackduck_trust_cert \
       -t core-image-minimal \
+      --oe-build-env custom-oe-init \
       -p myproject -v v1.0
 
 To scan a Yocto project with a custom oe-init script, specified target 'core-image-minimal' and a different license manifest as opposed to the most recent one:
@@ -275,6 +277,7 @@ To skip the Synopsys Detect Yocto scan and Signature scan the downloaded package
       --blackduck_trust_cert \
       -p myproject -v v1.0 \
       -t core-image-minimal \
+      --oe-build-env custom-oe-init \
       --skip_detect_for_bitbake
 
 To perform a CVE check patch analysis ONLY (to update an existing Black Duck project created previously by the script with patched vulnerabilities) use the command:
@@ -285,25 +288,37 @@ To perform a CVE check patch analysis ONLY (to update an existing Black Duck pro
       --blackduck_trust_cert \
       -p myproject -v v1.0 \
       -t core-image-minimal \
+      --oe-build-env custom-oe-init \
       --cve_check_only
 
 ### TROUBLESHOOTING
 
 - Check all the prerequisites, and that there is a built Yocto project with a generated license.manifest file.
 
+
 - Ensure that the Yocto environment is fully defined with the OE init file (`--oe-build-env` option). This script calls Synopsys Detect to extract dependencies which requires that all environment variables are configured within the init file. If necessary, modify the init script to include the additional values, and test with Synopsys Detect standalone first.
+
 
 - After scan completion, check that there are at least 2 separate code locations in the Source tab in the Black Duck project (one for dependencies and the other for Signature scan).
 
+
 - Ensure that the Synopsys Detect run has completed successfully, and created entries in the project. Look for items in the project with Match Type of `Direct Dependency`. If none are shown then try running Synopsys Detect standalone to troubleshoot why the dependency scan is not working correctly.
+
 
 - If the dependency scan exists but shows no components, then examine the console log from the script run, looking for the message `No license.manifest file found for target image core-image-sato; every dependency will be considered a BUILD dependency`. If so, then rerun using the `--detect_fix` option in this script (see section DETECT FIX).
 
+
 - Examine the `Unmatched Components` from the Synopsys Detect run - these indicate recipes which could not be matched against the Black Duck KB (usually because they have been moved to a new layer, use a new version or revision, or are modified OSS or commercial components). Consider adding manual components to the project to match these components.
+
 
 - Examine the Signature scan contents within the Source tab to confirm that package files (.rpm, .pki, .tar.gz etc.) were identified and scanned.
 
+
 - If you are looking for a specific package which appears to be missing from the project, confirm that you are looking for the recipe name not the package name. See the FAQs for an explanation of Yocto recipes versus packages. Check that the package file was included in the Signature scan (within the Source tab).
+
+
+- If your environment is not set completely within an oe-init script (or you are using another Yocto wrapper such as KAS https://kas.readthedocs.io/), you could try the --no_init_script option (See FAQs below).
+
 
 ### CVE PATCHING
 
@@ -379,6 +394,12 @@ The identification of the Linux Kernel version from the Bitbake recipes and asso
    _The kernel cannot be identified due to a custom name format being used in Yocto. See the section OUTSTANDING ISSUES above. Add the required kernel version to the project manually._
 
 
+7. My environment is not completely set inside the oe-init script (or I am using another Yocto wrapper such as KAS https://kas.readthedocs.io/)
+
+   _Synopsys Detect calls the oe-init script in a sub-shell before running Bitbake, meaning that it is not possible to pass environmental values unless they are in the oe-init script.
+   The --no_init_script option allows the bd_scan_yocto script to bypass the use of the oe-init sceript, but you will also need to specify the --skip_detect_for_bitbake option to skip the Detect Bitbake scan_
+
+
 # UPDATE HISTORY
 
 ## V1.0
@@ -416,3 +437,6 @@ The identification of the Linux Kernel version from the Bitbake recipes and asso
 
 ## V1.0.11
 - Added check for target (after wizard) which is now required.
+
+## V1.0.12
+- Added --no_init_script option.
