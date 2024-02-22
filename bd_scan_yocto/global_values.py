@@ -1,4 +1,4 @@
-script_version = '1.0.11'
+script_version = '1.0.12'
 bdio = []
 bdio_comps_layers = []
 bdio_comps_recipes = []
@@ -41,3 +41,4 @@ ignore_components = True
 binary_scan = False
 binary_scan_exts = "*.rpm,*.deb,*.tar,*.gz,*.ipk,*.zip,*.xz"
 detect_fix = False
+no_init_script = False

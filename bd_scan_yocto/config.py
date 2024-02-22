@@ -69,6 +69,9 @@ parser.add_argument("--no_ignore", help="Do not ignore partial components after 
                     action='store_true')
 parser.add_argument("--binary_scan", help="Run BDBA binary scan on packages (requires BDBA license)",
                     action='store_true')
+parser.add_argument("--no_init_script", help="Bypass using the OE init script taking environment from"
+                                             "current shell (requires --skip_detect_for_bitbake to be specified)",
+                    action='store_true')
 parser.add_argument("--detect_fix", help="Process license_manifest to ignore build dependencies "
                     "(required where Detect option --detect.bitbake.dependency.types.excluded=BUILD is not operating "
                                          "correctly)",
@@ -117,7 +120,7 @@ def check_args():
     if args.testmode:
         global_values.testmode = True
     else:
-        if not os.path.isfile(global_values.oe_build_env):
+        if not args.no_init_script and not os.path.isfile(global_values.oe_build_env):
             logging.error(f"Cannot find Yocto build environment config file '{global_values.oe_build_env}'")
             sys.exit(2)
 
@@ -264,7 +267,10 @@ def get_bitbake_env():
         logging.info("GETTING YOCTO ENVIRONMENT")
         logging.info("- Running 'bitbake -e' ...")
 
-        cmd = f"bash -c 'source {global_values.oe_build_env}; bitbake -e'"
+        if global_values.no_init_script:
+            cmd = f"bitbake -e"
+        else:
+            cmd = f"bash -c 'source {global_values.oe_build_env}; bitbake -e'"
         ret = utils.run_cmd(cmd)
         if ret == b'':
             logging.error("Cannot run 'bitbake -e'")

@@ -1,4 +1,4 @@
-# Synopsys Scan Yocto Script - bd_scan_yocto.py - BETA v1.0.11
+# Synopsys Scan Yocto Script - bd_scan_yocto.py - BETA v1.0.12
 
 # PROVISION OF THIS SCRIPT
 This script is provided under the Apache v2 OSS license (see LICENSE file).
@@ -198,6 +198,8 @@ The `bd_scan_yocto` parameters for command line usage are shown below:
                            Type of packages installed (rpm, deb or ipk - default 'rpm')
      --no_ignore           Do not ignore partially matched components from Signature scan
      --binary_scan         Run an additional binary (BDBA) scan on the downloaded package files (Requires BDBA license)
+     --no_init_script      Bypass using the OE init script taking environment from current shell
+                           (requires --skip_detect_for_bitbake to be specified)
      --detect_fix          Add extra logic to process license_manifest to ignore build dependencies
                            (required where Detect option --detect.bitbake.dependency.types.excluded=BUILD is
                            not operating correctly) - see section 
