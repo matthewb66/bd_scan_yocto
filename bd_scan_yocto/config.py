@@ -351,10 +351,12 @@ def find_yocto_files():
         else:
             imgdir = os.path.join(global_values.deploy_dir, "images", machine)
             cvefile = ""
-            for file in sorted(os.listdir(imgdir)):
-                if file == global_values.target + "-" + machine + ".cve":
-                    cvefile = os.path.join(imgdir, file)
-                    break
+
+            if os.path.isdir(imgdir):
+                for file in sorted(os.listdir(imgdir)):
+                    if file == global_values.target + "-" + machine + ".cve":
+                        cvefile = os.path.join(imgdir, file)
+                        break
 
             if not os.path.isfile(cvefile):
                 logging.warning(f"CVE check file {cvefile} could not be located - skipping CVE processing")
