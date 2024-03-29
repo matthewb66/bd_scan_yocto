@@ -18,6 +18,7 @@ bd_version = ''
 # offline = False
 oe_build_env = ''
 oe_build_envpath = '.'
+oe_build_envfile = ''
 deploy_dir = ''
 download_dir = ''
 pkg_dir = ''

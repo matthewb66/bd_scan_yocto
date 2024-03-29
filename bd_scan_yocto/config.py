@@ -112,10 +112,10 @@ def check_args():
     logging.info('----------------------------------   PHASE 0  ----------------------------------')
 
     if args.oe_build_env != '':
+        global_values.oe_build_env = args.oe_build_env
+        global_values.oe_build_envfile = os.path.basename(args.oe_build_env)
         if os.path.dirname(args.oe_build_env) != '':
             global_values.oe_build_envpath = os.path.dirname(args.oe_build_env)
-            logging.warning("Fixing OE environment name (--oe_build_env) which was specified as a PATH")
-        global_values.oe_build_env = os.path.basename(args.oe_build_env)
 
     if args.testmode:
         global_values.testmode = True
