@@ -4,13 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bd_scan_yocto"
-version = "1.0.7"
+version = "1.0.13"
 authors = [
   { name="Matthew Brady", email="mbrad@synopsys.com" },
 ]
 description = "Process a built Yocto project to create a Black Duck project version"
 readme = "README.md"
-license = "Apache-2.0"
 requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -18,17 +17,14 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "blackduck>=1.0.4",
+    "blackduck>=1.1.0",
     "requests",
     "aiohttp",
 ]
-packages = [
-    { include = "bd_scan_yocto/*.py" },
-]
 
-[console_scripts]
-bd-scan-yocto = "bd_scan_yocto.main"
+[project.scripts]
+bd-scan-yocto = "bd_scan_yocto:main.main"
 
 [project.urls]
-"Homepage" = "https://github.com/blackducksoftware/bd_scan_yocto"
-"Bug Tracker" = "https://github.com/blackducksoftware/bd_scan_yocto/issues"
+"Homepage" = "https://github.com/matthewb66/bd_scan_yocto"
+"Bug Tracker" = "https://github.com/matthewb66/bd_scan_yocto/issues"

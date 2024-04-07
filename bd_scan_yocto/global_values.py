@@ -1,4 +1,4 @@
-script_version = '1.0.12'
+script_version = '1.0.13'
 bdio = []
 bdio_comps_layers = []
 bdio_comps_recipes = []
@@ -18,6 +18,7 @@ bd_version = ''
 # offline = False
 oe_build_env = ''
 oe_build_envpath = '.'
+build_dir = ''
 deploy_dir = ''
 download_dir = ''
 pkg_dir = ''

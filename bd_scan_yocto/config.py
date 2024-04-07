@@ -28,6 +28,7 @@ parser.add_argument("--oe_build_env",
                     default="oe-init-build-env")
 parser.add_argument("-t", "--target", help="Yocto target (e.g. core-image-sato - REQUIRED)",
                     default="")
+parser.add_argument("--build_dir", type=str, help="Alternative build folder", default="")
 parser.add_argument("-m", "--manifest",
                     help="Built license.manifest file (usually under ",
                     default="")
@@ -158,6 +159,12 @@ def check_args():
     trustcert = os.environ.get('BLACKDUCK_TRUST_CERT')
     if trustcert == 'true' or args.blackduck_trust_cert:
         global_values.bd_trustcert = True
+
+    if args.build_dir != '':
+        if not os.path.isdir(args.build_dir):
+            logging.warning(f"Specified build folder '{args.build_dir}' does not exist")
+        else:
+            global_values.build_dir = os.path.abspath(args.build_dir)
 
     if args.download_dir != '':
         if not os.path.isdir(args.download_dir):
@@ -322,6 +329,20 @@ def get_bitbake_env():
             global_values.pkg_dir = ipk_dir
         elif global_values.image_pkgtype == 'deb' and deb_dir != '':
             global_values.pkg_dir = deb_dir
+
+        if global_values.build_dir != '':
+            if global_values.deploy_dir == '':
+                tempdir = os.path.join(global_values.build_dir, 'tmp', 'deploy')
+                if os.path.isdir(tempdir):
+                    global_values.deploy_dir = tempdir
+            if global_values.download_dir == '':
+                tempdir = os.path.join(global_values.build_dir, 'downloads')
+                if os.path.isdir(tempdir):
+                    global_values.download_dir = tempdir
+            if global_values.pkg_dir == '' and global_values.deploy_dir != '':
+                tempdir = os.path.join(global_values.deploy_dir, global_values.image_pkgtype)
+                if os.path.isdir(tempdir):
+                    global_values.pkg_dir = tempdir
 
 
 def find_yocto_files():
