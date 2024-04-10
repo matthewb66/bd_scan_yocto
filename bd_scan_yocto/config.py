@@ -44,9 +44,9 @@ parser.add_argument("--cve_check_only", help="Only check for patched CVEs from c
 parser.add_argument("--no_cve_check", help="Skip checking/updating patched CVEs", action='store_true')
 parser.add_argument("--cve_check_file",
                     help="CVE check output file (if not specified will be determined from environment)", default="")
-parser.add_argument("--wizard", help="Start command line wizard (Wizard will run by default if config incomplete)",
-                    action='store_true')
-parser.add_argument("--nowizard", help="Do not use wizard (command line batch only)", action='store_true')
+# parser.add_argument("--wizard", help="Start command line wizard (Wizard will run by default if config incomplete)",
+#                     action='store_true')
+# parser.add_argument("--nowizard", help="Do not use wizard (command line batch only)", action='store_true')
 parser.add_argument("--extended_scan_layers",
                     help="Specify a comma-delimited list of layers where packages within recipes will be expanded "
                          "and Snippet scanned",
@@ -357,6 +357,7 @@ def find_yocto_files():
             manifest = ""
             manlist = glob.glob(manpath)
             if len(manlist) > 0:
+                # Get most recent file
                 manifest = manlist[-1]
 
             if not os.path.isfile(manifest):
@@ -389,180 +390,183 @@ def find_yocto_files():
     return
 
 
-def input_number(prompt):
-    print(f'{prompt} (q to quit): ', end='')
-    val = input()
-    while not val.isnumeric() and val.lower() != 'q':
-        print('Please enter a number (or q)')
-        print(f'{prompt}: ', end='')
-        val = input()
-    if val.lower() != 'q':
-        return int(val)
-    else:
-        logging.info('Terminating')
-        sys.exit(2)
+# def input_number(prompt):
+#     print(f'{prompt} (q to quit): ', end='')
+#     val = input()
+#     while not val.isnumeric() and val.lower() != 'q':
+#         print('Please enter a number (or q)')
+#         print(f'{prompt}: ', end='')
+#         val = input()
+#     if val.lower() != 'q':
+#         return int(val)
+#     else:
+#         logging.info('Terminating')
+#         sys.exit(2)
+#
+
+# def input_file(prompt, accept_null, file_exists):
+#     if accept_null:
+#         prompt_help = '(q to quit, Enter to skip)'
+#     else:
+#         prompt_help = '(q to quit)'
+#     print(f'{prompt} {prompt_help}: ', end='')
+#     val = input()
+#     while (file_exists and not os.path.isfile(val)) and val.lower() != 'q':
+#         if accept_null and val == '':
+#             break
+#         print(f'Invalid input ("{val}" is not a file)')
+#         print(f'{prompt} {prompt_help}: ', end='')
+#         val = input()
+#     if val.lower() != 'q' or (accept_null and val == ''):
+#         return val
+#     else:
+#         logging.info('Terminating')
+#         sys.exit(2)
+#
+#
+# def input_folder(prompt, default):
+#     prompt_help = '(q to quit)'
+#     print(f'{prompt} {prompt_help}: ', end='')
+#     val = input()
+#     while not os.path.isdir(val) and val.lower() != 'q':
+#         if val == '':
+#             break
+#         print(f'Invalid input ("{val}" is not a folder)')
+#         print(f'{prompt} {prompt_help}: ', end='')
+#         val = input()
+#     if val.lower() != 'q':
+#         return val
+#     else:
+#         logging.info('Terminating')
+#         sys.exit(2)
+#
+#
+# def input_string(prompt):
+#     print(f'{prompt} (q to quit): ', end='')
+#     val = input()
+#     while len(val) == 0 and val != 'q':
+#         print(f'{prompt}: ', end='')
+#         val = input()
+#     if val.lower() != 'q':
+#         return val
+#     else:
+#         logging.info('Terminating')
+#         sys.exit(2)
+#
+#
+# def input_string_default(prompt, default):
+#     print(f"{prompt} [Press return for '{default}'] (q to quit): ", end='')
+#     val = input()
+#     if val.lower() == 'q':
+#         sys.exit(2)
+#     if len(val) == 0:
+#         logging.info('Terminating')
+#         return default
+#     else:
+#         return val
+#
+#
+# def input_yesno(prompt):
+#     accept_other = ['n', 'q', 'no', 'quit']
+#     accept_yes = ['y', 'yes']
+#
+#     print(f'{prompt} (y/n/q): ', end='')
+#     val = input()
+#     while val.lower() not in accept_yes and val.lower() not in accept_other:
+#         print('Please enter y or n')
+#         print(f'{prompt}: ', end='')
+#         val = input()
+#     if val.lower() == 'q':
+#         sys.exit(2)
+#     if val.lower() in accept_yes:
+#         return True
+#     return False
+#
+#
+# def input_filepattern(pattern, filedesc, path):
+#     retval = ''
+#     enterfile = False
+#     if input_yesno(f"Do you want to search recursively for '{filedesc}'?"):
+#         files_list = glob.glob(os.path.join(path, pattern), recursive=True)
+#         if len(files_list) > 0:
+#             print(f'Please select the {filedesc} file to be used: ')
+#             files_list = ['None of the below'] + files_list
+#             for i, f in enumerate(files_list):
+#                 print(f'\t{i}: {f}')
+#             val = input_number('Please enter file entry number')
+#             if val == 0:
+#                 enterfile = True
+#             else:
+#                 retval = files_list[val]
+#         else:
+#             print(f'Unable to find {filedesc} ...')
+#             enterfile = True
+#     else:
+#         enterfile = True
+#
+#     if enterfile:
+#         retval = input_file(f'Please enter the {filedesc} path', False, True)
+#
+#     if not os.path.isfile(retval):
+#         logging.error(f'Unable to locate {filedesc} - exiting')
+#         sys.exit(2)
+#     return retval
 
 
-def input_file(prompt, accept_null, file_exists):
-    if accept_null:
-        prompt_help = '(q to quit, Enter to skip)'
-    else:
-        prompt_help = '(q to quit)'
-    print(f'{prompt} {prompt_help}: ', end='')
-    val = input()
-    while (file_exists and not os.path.isfile(val)) and val.lower() != 'q':
-        if accept_null and val == '':
-            break
-        print(f'Invalid input ("{val}" is not a file)')
-        print(f'{prompt} {prompt_help}: ', end='')
-        val = input()
-    if val.lower() != 'q' or (accept_null and val == ''):
-        return val
-    else:
-        logging.info('Terminating')
-        sys.exit(2)
-
-
-def input_folder(prompt):
-    prompt_help = '(q to quit)'
-    print(f'{prompt} {prompt_help}: ', end='')
-    val = input()
-    while not os.path.isdir(val) and val.lower() != 'q':
-        if val == '':
-            break
-        print(f'Invalid input ("{val}" is not a folder)')
-        print(f'{prompt} {prompt_help}: ', end='')
-        val = input()
-    if val.lower() != 'q':
-        return val
-    else:
-        logging.info('Terminating')
-        sys.exit(2)
-
-
-def input_string(prompt):
-    print(f'{prompt} (q to quit): ', end='')
-    val = input()
-    while len(val) == 0 and val != 'q':
-        print(f'{prompt}: ', end='')
-        val = input()
-    if val.lower() != 'q':
-        return val
-    else:
-        logging.info('Terminating')
-        sys.exit(2)
-
-
-def input_string_default(prompt, default):
-    print(f"{prompt} [Press return for '{default}'] (q to quit): ", end='')
-    val = input()
-    if val.lower() == 'q':
-        sys.exit(2)
-    if len(val) == 0:
-        logging.info('Terminating')
-        return default
-    else:
-        return val
-
-
-def input_yesno(prompt):
-    accept_other = ['n', 'q', 'no', 'quit']
-    accept_yes = ['y', 'yes']
-
-    print(f'{prompt} (y/n/q): ', end='')
-    val = input()
-    while val.lower() not in accept_yes and val.lower() not in accept_other:
-        print('Please enter y or n')
-        print(f'{prompt}: ', end='')
-        val = input()
-    if val.lower() == 'q':
-        sys.exit(2)
-    if val.lower() in accept_yes:
-        return True
-    return False
-
-
-def input_filepattern(pattern, filedesc, path):
-    retval = ''
-    enterfile = False
-    if input_yesno(f"Do you want to search recursively for '{filedesc}'?"):
-        files_list = glob.glob(os.path.join(path, pattern), recursive=True)
-        if len(files_list) > 0:
-            print(f'Please select the {filedesc} file to be used: ')
-            files_list = ['None of the below'] + files_list
-            for i, f in enumerate(files_list):
-                print(f'\t{i}: {f}')
-            val = input_number('Please enter file entry number')
-            if val == 0:
-                enterfile = True
-            else:
-                retval = files_list[val]
-        else:
-            print(f'Unable to find {filedesc} ...')
-            enterfile = True
-    else:
-        enterfile = True
-
-    if enterfile:
-        retval = input_file(f'Please enter the {filedesc} path', False, True)
-
-    if not os.path.isfile(retval):
-        logging.error(f'Unable to locate {filedesc} - exiting')
-        sys.exit(2)
-    return retval
-
-
-def do_wizard():
-    print('\nRUNNING WIZARD (Use --nowizard to disable) ...')
-
-    wiz_dict = [
-        {'value': 'global_values.bd_url', 'prompt': 'Black Duck server URL', 'vtype': 'string'},
-        {'value': 'global_values.bd_api', 'prompt': 'Black Duck API token', 'vtype': 'string'},
-        {'value': 'global_values.bd_trustcert', 'prompt': 'Trust BD Server certificate', 'vtype': 'yesno'},
-        {'value': 'global_values.bd_project', 'prompt': 'Black Duck project name', 'vtype': 'string'},
-        {'value': 'global_values.bd_version', 'prompt': 'Black Duck version name', 'vtype': 'string'},
-        {'value': 'global_values.manifest_file', 'prompt': 'Manifest file path', 'vtype': 'file_pattern',
-         'pattern': 'license.manifest', 'filedesc': 'license.manifest file',
-         'searchpath': 'global_values.deploy_dir'},
-        {'value': 'global_values.target', 'prompt': 'Yocto target name', 'vtype': 'string',
-         'condition': 'global_values.skip_detect_for_bitbake'},
-        # {'value': 'global_values.deploy_dir', 'prompt': 'Yocto deploy folder', 'vtype': 'folder'},
-        {'value': 'global_values.download_dir', 'prompt': 'Yocto OSS source download folder', 'vtype': 'folder'},
-        {'value': 'global_values.pkg_dir', 'prompt': 'Yocto package download folder', 'vtype': 'folder'},
-        # {'value': 'global_values.cve_check',
-        #  'prompt': 'Do you want to run a CVE check to patch CVEs in the BD project which have been patched locally?',
-        #  'vtype': 'yesno'},
-        # {'value': 'global_values.cve_check_file', 'prompt': 'CVE check file path',
-        #  'vtype': 'file_pattern', 'pattern': '**/rootfs.cve', 'filename': 'CVE check output file',
-        #  'condition': 'global_values.cve_check'},
-        # {'value': 'global_values.report_file', 'prompt': 'Output report file', 'vtype': 'string'},
-    ]
-
-    wiz_count = 0
-    for wiz_entry in wiz_dict:
-        val = ''
-        existingval = eval(wiz_entry['value'])
-        if existingval == '':
-            if 'condition' in wiz_entry:
-                conditionval = eval(wiz_entry['condition'])
-                if conditionval:
-                    continue
-            if wiz_entry['vtype'] == 'string':
-                val = input_string(wiz_entry['prompt'])
-            elif wiz_entry['vtype'] == 'string_default':
-                val = input_string_default(wiz_entry['prompt'], wiz_entry['default'])
-            elif wiz_entry['vtype'] == 'yesno':
-                val = input_yesno(wiz_entry['prompt'])
-            elif wiz_entry['vtype'] == 'file':
-                val = input_file(wiz_entry['prompt'], False, True)
-            elif wiz_entry['vtype'] == 'folder':
-                val = input_folder(wiz_entry['prompt'])
-            elif wiz_entry['vtype'] == 'file_pattern':
-                val = input_filepattern(wiz_entry['pattern'], wiz_entry['filedesc'], eval(wiz_entry['searchpath']))
-            wiz_count += 1
-            globals()[wiz_entry['value']] = val
-            logging.debug(f"{wiz_entry['value']}={val}")
-
-    if wiz_count == 0:
-        print("- Nothing for Wizard to do - continuing ...\n")
-    return
+# def do_wizard():
+#     print('\nRUNNING WIZARD (Use --nowizard to disable) ...')
+#
+#     wiz_dict = [
+#         {'value': 'global_values.bd_url', 'prompt': 'Black Duck server URL', 'vtype': 'string'},
+#         {'value': 'global_values.bd_api', 'prompt': 'Black Duck API token', 'vtype': 'string'},
+#         {'value': 'global_values.bd_trustcert', 'prompt': 'Trust BD Server certificate', 'vtype': 'yesno'},
+#         {'value': 'global_values.bd_project', 'prompt': 'Black Duck project name', 'vtype': 'string'},
+#         {'value': 'global_values.bd_version', 'prompt': 'Black Duck version name', 'vtype': 'string'},
+#         {'value': 'global_values.target', 'prompt': 'Yocto target name', 'vtype': 'string',
+#          'condition': 'global_values.skip_detect_for_bitbake'},
+#         {'value': 'global_values.build_dir', 'prompt': 'Yocto build folder', 'vtype': 'folder',
+#          'default': os.path.join(os.path.abspath('.'), 'build')},
+#         {'value': 'global_values.manifest_file', 'prompt': 'Manifest file path', 'vtype': 'file_pattern',
+#          'pattern': 'license.manifest', 'filedesc': 'license.manifest file',
+#          'searchpath': os.path.join(global_values.build_dir, 'tmp', 'deploy')},
+#
+#         # {'value': 'global_values.deploy_dir', 'prompt': 'Yocto deploy folder', 'vtype': 'folder'},
+#         # {'value': 'global_values.download_dir', 'prompt': 'Yocto OSS source download folder', 'vtype': 'folder'},
+#         # {'value': 'global_values.pkg_dir', 'prompt': 'Yocto package download folder', 'vtype': 'folder'},
+#         # {'value': 'global_values.cve_check',
+#         #  'prompt': 'Do you want to run a CVE check to patch CVEs in the BD project which have been patched locally?',
+#         #  'vtype': 'yesno'},
+#         # {'value': 'global_values.cve_check_file', 'prompt': 'CVE check file path',
+#         #  'vtype': 'file_pattern', 'pattern': '**/rootfs.cve', 'filename': 'CVE check output file',
+#         #  'condition': 'global_values.cve_check'},
+#         # {'value': 'global_values.report_file', 'prompt': 'Output report file', 'vtype': 'string'},
+#     ]
+#
+#     wiz_count = 0
+#     for wiz_entry in wiz_dict:
+#         val = ''
+#         existingval = eval(wiz_entry['value'])
+#         if existingval == '':
+#             if 'condition' in wiz_entry:
+#                 conditionval = eval(wiz_entry['condition'])
+#                 if conditionval:
+#                     continue
+#             if wiz_entry['vtype'] == 'string':
+#                 val = input_string(wiz_entry['prompt'])
+#             elif wiz_entry['vtype'] == 'string_default':
+#                 val = input_string_default(wiz_entry['prompt'], wiz_entry['default'])
+#             elif wiz_entry['vtype'] == 'yesno':
+#                 val = input_yesno(wiz_entry['prompt'])
+#             elif wiz_entry['vtype'] == 'file':
+#                 val = input_file(wiz_entry['prompt'], False, True)
+#             elif wiz_entry['vtype'] == 'folder':
+#                 val = input_folder(wiz_entry['prompt'], wiz_entry['default'])
+#             elif wiz_entry['vtype'] == 'file_pattern':
+#                 val = input_filepattern(wiz_entry['pattern'], wiz_entry['filedesc'], eval(wiz_entry['searchpath']))
+#             wiz_count += 1
+#             globals()[wiz_entry['value']] = val
+#             logging.debug(f"{wiz_entry['value']}={val}")
+#
+#     if wiz_count == 0:
+#         print("- Nothing for Wizard to do - continuing ...\n")
+#     return

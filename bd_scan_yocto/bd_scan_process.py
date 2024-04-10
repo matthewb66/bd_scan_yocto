@@ -97,6 +97,9 @@ def run_detect_for_bitbake():
     detect_cmd += "--detect.tools=DETECTOR "
     detect_cmd += "--detect.project.codelocation.unmap=true "
     detect_cmd += f"--detect.bitbake.package.names='{global_values.target}' "
+    if global_values.build_dir != '':
+        detect_cmd += f"--detect.bitbake.source.arguments='{global_values.build_dir}' "
+
     if not global_values.detect_fix:
         detect_cmd += "--detect.bitbake.dependency.types.excluded=BUILD "
     if global_values.detect_opts != '':
