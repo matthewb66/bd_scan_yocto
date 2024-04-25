@@ -203,6 +203,7 @@ The `bd_scan_yocto` parameters for command line usage are shown below:
                            not operating correctly) - see section 
      --debug               DEBUG mode - add debug messages to the console log
      --logfile LOGFILE     Specify LOGFILE to store logging messages (will also be sent to the console)
+     --no_unmap            Do not unmap existing scans from the project on rescan
 
 
 The script needs to be executed in the Yocto project folder (e.g. `yocto_zeus/poky`) where the OE initialisation script is located (for example `oe-init-build-env`).

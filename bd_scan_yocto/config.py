@@ -80,6 +80,7 @@ parser.add_argument("--detect_fix", help="Process license_manifest to ignore bui
 parser.add_argument("--testmode", help="Test mode - skip various checks", action='store_true')
 parser.add_argument("--debug", help="Debug logging mode", action='store_true')
 parser.add_argument("--logfile", help="Logging output file", default="")
+parser.add_argument("--no_unmap", help="Do not unmap previous scans when running new scan", action='store_true')
 
 args = parser.parse_args()
 
@@ -236,6 +237,9 @@ def check_args():
 
     if args.detect_fix:
         global_values.detect_fix = True
+
+    if args.no_unmap:
+        global_values.unmap = False
 
     # if args.bblayers_out != "":
     #     if args.extended_scan_layers:

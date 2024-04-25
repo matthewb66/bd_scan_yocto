@@ -43,3 +43,4 @@ binary_scan = False
 binary_scan_exts = "*.rpm,*.deb,*.tar,*.gz,*.ipk,*.zip,*.xz"
 detect_fix = False
 no_init_script = False
+unmap = False

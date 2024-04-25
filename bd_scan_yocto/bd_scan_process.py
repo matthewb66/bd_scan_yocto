@@ -55,7 +55,8 @@ def run_detect_sigscan(tdir, proj, ver, trust):
     detect_cmd += "--detect.wait.for.results=true "
     if global_values.snippets:
         detect_cmd += "--detect.blackduck.signature.scanner.snippet.matching=SNIPPET_MATCHING "
-    detect_cmd += "--detect.timeout=1200 "
+    if not 'detect.timeout' in global_values.detect_opts:
+        detect_cmd += "--detect.timeout=1200 "
 
     if global_values.binary_scan:
         detect_cmd += f"--detect.binary.scan.file.name.patterns='{global_values.binary_scan_exts}' "
@@ -95,7 +96,8 @@ def run_detect_for_bitbake():
         detect_cmd += "--blackduck.trust.cert=true "
     detect_cmd += "--detect.wait.for.results=true "
     detect_cmd += "--detect.tools=DETECTOR "
-    detect_cmd += "--detect.project.codelocation.unmap=true "
+    if global_values.unmap:
+        detect_cmd += "--detect.project.codelocation.unmap=true "
     detect_cmd += f"--detect.bitbake.package.names='{global_values.target}' "
     if global_values.build_dir != '':
         detect_cmd += f"--detect.bitbake.source.arguments='{global_values.build_dir}' "
