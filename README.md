@@ -69,14 +69,16 @@ The automatic scan behaviour of `bd_scan_yocto` is described below:
 
 An alternate script [import_yocto_bm](https://github.com/blackducksoftware/import_yocto_bm) has been available for some time to address limitations of Synopsys Detect for Yocto, however it requires the list of known OpenEmbedded recipes from the Black Duck KB to be maintained and updated regularly within the project, potentially leading to inaccurate results if the data is out of date.
 
-Furthermore, `import_yocto_bm` does not support scanning non-OpenEmbedded recipes or custom recipes, providing only a partial Bill of Materials.
+Furthermore, `import_yocto_bm` does not support scanning non-OpenEmbedded recipes or custom recipes, providing only a partial Bill of Materials and also uses a deprecated method of creating projects.
 
 Components matched from `import_yocto_bm` have no copyright or deep license data, and snippet or local license/copyright scanning is not supported (as there is no package source to scan).
+
+This script should be used in place of `import_yocto_bm`.
 
 # RUNNING BD_SCAN_YOCTO 
 ### SUPPORTED YOCTO PROJECTS
 
-This script is designed to support Yocto versions 2.0 up to 4.4.
+This script is designed to support Yocto versions 2.0 up to 4.4 (other versions may also be supported).
 
 ### PREREQUISITES
 
@@ -100,6 +102,11 @@ This script is designed to support Yocto versions 2.0 up to 4.4.
 
 ### INSTALLATION
 
+Install using `pip3 install bd_scan_yocto`
+
+To upgrade to the latest version use `pip3 install bd_scan_yocto --upgrade`
+
+Alternatively the project can be built locally:
 1. Download or clone this repository
 2. Create a virtual environment (optional)
 3. Run 'python3 setup.py install' to install dependencies
@@ -107,7 +114,13 @@ This script is designed to support Yocto versions 2.0 up to 4.4.
 
 ### USAGE
 
-Change to the poky folder where the OE initialization script exists.
+If installed as a pip package, simply run:
+
+       bd-scan-yocto OPTIONS
+
+If `bd-scan-yocto` is not found on the PATH, note the messages when the package was installed and add the install location for the script to the PATH.
+
+To use the utility, change to the poky folder where the OE initialization script exists.
 
 The minimum data required to run the script is:
 
@@ -117,7 +130,7 @@ The minimum data required to run the script is:
 - OE initialization script (for example `oe-init-build-env`)
 - Yocto target name
 
-Use python to run the script `bd_scan_yocto/main.py`, for example (where SCRIPT_DIR is the folder where the script has been
+Alternatively, if you wish to run the code directly without pip installation, use python to run the script `bd_scan_yocto/main.py`, for example (where SCRIPT_DIR is the folder where the script has been
 installed):
 
     python3 SCRIPT_DIR/bd_scan_yocto/main.py OPTIONS
@@ -245,7 +258,7 @@ Where `SERVER_URL` is the Black Duck server URL and `TOKEN` is the Black Duck AP
 
 Use the following command to scan a Yocto project (with default oe-build-env 'oe-init-build-env' and target 'core-image-sato', latest license.manifest file), create Black Duck project `myproject` and version `v1.0`, then update CVE patch status for identified CVEs if cve_patch data available (where SCRIPT_DIR is the location where the script has been installed):
 
-    python3 SCRIPT_DIR/bd_scan_yocto/main.py \
+    bd-scan-yocto \
       --blackduck_url https://SERVER_URL \
       --blackduck_api_token TOKEN \
       --blackduck_trust_cert \
@@ -255,7 +268,7 @@ Use the following command to scan a Yocto project (with default oe-build-env 'oe
 
 To scan a Yocto project with a custom oe-init script, specified target 'core-image-minimal' and a different license manifest as opposed to the most recent one:
 
-    python3 SCRIPT_DIR/bd_scan_yocto/main.py \
+    bd-scan-yocto \
       --blackduck_url https://SERVER_URL \
       --blackduck_api_token TOKEN \
       --blackduck_trust_cert \
@@ -266,7 +279,7 @@ To scan a Yocto project with a custom oe-init script, specified target 'core-ima
 
 To skip the Synopsys Detect Yocto scan and Signature scan the downloaded package archives only with default target and latest license manifest file:
 
-    python3 SCRIPT_DIR/bd_scan_yocto/main.py \
+    bd-scan-yocto \
       --blackduck_url https://SERVER_URL \
       --blackduck_api_token TOKEN \
       --blackduck_trust_cert \
@@ -277,7 +290,7 @@ To skip the Synopsys Detect Yocto scan and Signature scan the downloaded package
 
 To perform a CVE check patch analysis ONLY (to update an existing Black Duck project created previously by the script with patched vulnerabilities) use the command:
 
-    python3 SCRIPT_DIR/bd_scan_yocto/main.py \
+    bd-scan-yocto \
       --blackduck_url https://SERVER_URL \
       --blackduck_api_token TOKEN \
       --blackduck_trust_cert \
