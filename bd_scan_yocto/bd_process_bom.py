@@ -181,24 +181,25 @@ def ignore_components(bd, ver_dict):
 	if count == 0:
 		return
 	for ignore_array in ignore_comps:
-		bulk_data = {
-			"components": ignore_array,
-			# "reviewStatus": "REVIEWED",
-			"ignored": True,
-			# "usage": "DYNAMICALLY_LINKED",
-			# "inAttributionReport": true
-		}
-
-		try:
-			url = ver_dict['_meta']['href'] + '/bulk-adjustment'
-			headers = {
-				"Accept": "application/vnd.blackducksoftware.bill-of-materials-6+json",
-				"Content-Type": "application/vnd.blackducksoftware.bill-of-materials-6+json"
+		if ignore_array:
+			bulk_data = {
+				"components": ignore_array,
+				# "reviewStatus": "REVIEWED",
+				"ignored": True,
+				# "usage": "DYNAMICALLY_LINKED",
+				# "inAttributionReport": true
 			}
-			r = bd.session.patch(url, json=bulk_data, headers=headers)
-			r.raise_for_status()
-		except requests.HTTPError as err:
-			bd.http_error_handler(err)
+
+			try:
+				url = ver_dict['_meta']['href'] + '/bulk-adjustment'
+				headers = {
+					"Accept": "application/vnd.blackducksoftware.bill-of-materials-6+json",
+					"Content-Type": "application/vnd.blackducksoftware.bill-of-materials-6+json"
+				}
+				r = bd.session.patch(url, json=bulk_data, headers=headers)
+				r.raise_for_status()
+			except requests.HTTPError as err:
+				bd.http_error_handler(err)
 
 	logging.info(f"- Ignored {count} components")
 	return
