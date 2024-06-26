@@ -169,7 +169,10 @@ def copy_pkg_files(pkgs, tmpdir):
     # print(temppkgdir)
     count = 0
     for pkg in pkgs:
-        shutil.copy(pkg, tmpdir)
+        if os.path.isdir(pkg):
+            shutil.copytree(pkg, tmpdir, ignore_dangling_symlinks=True, dirs_exist_ok=True)
+        else:
+            shutil.copy(pkg, tmpdir)
         count += 1
 
     logging.info(f"Copying recipe package files")
