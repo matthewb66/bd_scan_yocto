@@ -1,4 +1,4 @@
-# Synopsys Scan Yocto Script - bd_scan_yocto.py - BETA v1.0.17
+# Synopsys Scan Yocto Script - bd_scan_yocto.py - BETA v1.0.18
 
 # PROVISION OF THIS SCRIPT
 This script is provided under the Apache v2 OSS license (see LICENSE file).
@@ -458,5 +458,5 @@ The identification of the Linux Kernel version from the Bitbake recipes and asso
 ## V1.0.15
 - minor fix to --detect_fix option
 
-## V1.0.16 & V1.0.17
+## V1.0.16, V1.0.17, V1.0.18
 - minor fix to file copying for Sig scan
