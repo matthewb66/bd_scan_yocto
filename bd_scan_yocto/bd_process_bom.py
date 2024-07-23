@@ -95,7 +95,7 @@ def process_bdproject(bdproj, bdver):
 	bd = Client(
 		token=global_values.bd_api,
 		base_url=global_values.bd_url,
-		verify=(not global_values.bd_trustcert),  # TLS certificate verification
+		verify=global_values.bd_trustcert,  # TLS certificate verification
 		timeout=60
 	)
 
