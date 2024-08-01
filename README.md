@@ -102,9 +102,9 @@ This script is designed to support Yocto versions 2.0 up to 4.4 (other versions 
 
 ### INSTALLATION
 
-Install using `pip3 install bd_scan_yocto`
+Install using `pip3 install bd-scan-yocto`
 
-To upgrade to the latest version use `pip3 install bd_scan_yocto --upgrade`
+To upgrade to the latest version use `pip3 install bd-scan-yocto --upgrade`
 
 Alternatively the project can be built locally:
 1. Download or clone this repository
