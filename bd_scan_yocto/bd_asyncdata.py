@@ -1,7 +1,7 @@
 import aiohttp
 import asyncio
 # import platform
-import logging
+# import logging
 
 from bd_scan_yocto import global_values
 
