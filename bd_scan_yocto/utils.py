@@ -6,7 +6,7 @@ import time
 import subprocess
 import logging
 
-from bd_scan_yocto import global_values
+# from bd_scan_yocto import global_values
 # from bd_scan_yocto import config
 
 
