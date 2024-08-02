@@ -261,7 +261,7 @@ def connect():
         token=global_values.bd_api,
         base_url=global_values.bd_url,
         timeout=30,
-        verify=global_values.bd_trustcert  # TLS certificate verification
+        verify=(not global_values.bd_trustcert)  # TLS certificate verification
     )
     try:
         bd.list_resources()

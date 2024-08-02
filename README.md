@@ -1,4 +1,4 @@
-# Synopsys Scan Yocto Script - bd_scan_yocto.py - BETA v1.0.14
+# Synopsys Scan Yocto Script - bd_scan_yocto.py - BETA v1.0.15
 
 # PROVISION OF THIS SCRIPT
 This script is provided under the Apache v2 OSS license (see LICENSE file).
@@ -454,3 +454,6 @@ The identification of the Linux Kernel version from the Bitbake recipes and asso
 
 ## V1.0.14
 - Removed wizard, added --build_dir option
+
+## V1.0.15
+- Minor fix to BD connection
