@@ -30,7 +30,7 @@ async def async_main(comps, token):
 
 
 async def async_get_files(session, comp, token):
-    if not global_values.bd_trustcert:
+    if global_values.bd_trustcert:
         ssl = False
     else:
         ssl = None
@@ -47,7 +47,7 @@ async def async_get_files(session, comp, token):
         }
 
         archive_ignore = False
-        async with session.get(thishref, headers=headers, ssl=ssl) as resp:
+        async with session.get(thishref, headers=headers, ssl=ssl ) as resp:
             result_data = await resp.json()
             # cfile = result_data['items']
             # if len(cfile) > 0:
