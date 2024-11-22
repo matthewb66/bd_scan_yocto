@@ -1,4 +1,8 @@
-# Synopsys Scan Yocto Script - bd_scan_yocto.py - BETA v1.0.19
+# Synopsys Scan Yocto Script - bd_scan_yocto.py - DEPRECATED v1.0.19
+
+# DEPRECATION
+This repository has been deprecated and superceded by https://github.com/blackducksoftware/bd_scan_yocto_via_sbom.
+Please refer to this other repository for ongoing support and enhancements.
 
 # PROVISION OF THIS SCRIPT
 This script is provided under the Apache v2 OSS license (see LICENSE file).
